@@ -35,13 +35,7 @@ export function PlaylistSelector({ onRequestFolderSelect }: PlaylistSelectorProp
     <div className="bg-player-light rounded-xl p-6 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-medium text-player-text">Playlists</h3>
-        <Button 
-          variant="outline" 
-          onClick={onRequestFolderSelect}
-          className="text-sm border-player-accent text-player-text hover:bg-player-accent/20"
-        >
-          Add More
-        </Button>
+        {/* "Add More" button removed */}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

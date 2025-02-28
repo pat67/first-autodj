@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, SkipForward, Volume, VolumeX, Shuffle } from "lucide-react";
+import { Play, Pause, SkipForward, Volume, VolumeX } from "lucide-react";
 import audioManager from '@/utils/audioContext';
 import musicLibrary, { TrackMetadata } from '@/utils/musicLibrary';
 
@@ -172,7 +172,7 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
             step={0.1}
             onValueChange={handleSeek}
             onValueCommit={handleSeekEnd}
-            className="my-2"
+            className="my-2 [&_.absolute]:bg-gray-500"
             onPointerDown={handleSeekStart}
           />
           <div className="flex justify-between text-xs text-player-text/70">
@@ -202,7 +202,7 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
               max={1}
               step={0.01}
               onValueChange={handleVolumeChange}
-              className="w-24"
+              className="w-24 [&_.absolute]:bg-gray-500"
             />
           </div>
 
@@ -225,14 +225,8 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
             </Button>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-player-text hover:bg-player-accent rounded-full"
-            onClick={handleNextTrack}
-          >
-            <Shuffle size={20} />
-          </Button>
+          {/* Shuffle button removed */}
+          <div className="w-10"></div> {/* Empty div to maintain layout */}
         </div>
       </div>
     </div>
