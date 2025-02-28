@@ -19,11 +19,6 @@ export function PlaylistSelector({ onRequestFolderSelect }: PlaylistSelectorProp
     musicLibrary.setDefaultFolder(folderName);
   };
 
-  const handleResetFolder = (folderName: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    musicLibrary.resetPlayedTracksInFolder(folderName);
-  };
-
   if (folders.length === 0) {
     return (
       <div className="bg-player-light rounded-xl p-6 text-center text-player-text shadow-lg">
@@ -65,7 +60,7 @@ export function PlaylistSelector({ onRequestFolderSelect }: PlaylistSelectorProp
           >
             <div className="flex flex-col">
               <span className="font-medium truncate">{folder}</span>
-              <div className="flex mt-2 justify-between">
+              <div className="flex mt-2">
                 <button 
                   className="text-xs text-player-text/70 hover:text-player-text"
                   onClick={(e) => {
@@ -74,12 +69,6 @@ export function PlaylistSelector({ onRequestFolderSelect }: PlaylistSelectorProp
                   }}
                 >
                   {folder === defaultFolder ? "Default" : "Set as Default"}
-                </button>
-                <button 
-                  className="text-xs text-player-text/70 hover:text-player-text"
-                  onClick={(e) => handleResetFolder(folder, e)}
-                >
-                  Reset
                 </button>
               </div>
             </div>

@@ -1,3 +1,4 @@
+
 import { toast } from '@/hooks/use-toast';
 import audioManager from './audioContext';
 
@@ -67,7 +68,7 @@ class MusicLibrary {
             console.error(`Failed to extract metadata for ${file.name}:`, error);
             // Add basic metadata with filename as title
             folderTracks.push({
-              title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+              title: this.formatTitleFromFilename(file.name),
               artist: 'Unknown Artist',
               album: 'Unknown Album',
               duration: 0, // Will be updated when played
@@ -107,18 +108,80 @@ class MusicLibrary {
     }
   }
 
+  // Helper method to format title from filename
+  private formatTitleFromFilename(filename: string): string {
+    // Remove file extension
+    let title = filename.replace(/\.[^/.]+$/, "");
+    
+    // Replace underscores and hyphens with spaces
+    title = title.replace(/[_-]/g, " ");
+    
+    // Try to extract artist information if present (format: "Artist - Title")
+    const parts = title.split(" - ");
+    if (parts.length >= 2) {
+      title = parts.slice(1).join(" - "); // Take everything after the first " - "
+    }
+    
+    // Capitalize first letter of each word
+    title = title.split(" ").map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(" ");
+    
+    return title;
+  }
+
   private async extractMetadata(file: File, folderName: string): Promise<TrackMetadata> {
-    // For now, just use basic file information
-    // In a future version, we could use a library to extract ID3 tags
-    return {
-      title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
-      artist: 'Unknown Artist',
-      album: 'Unknown Album',
-      duration: 0, // Will be updated when played
-      path: file.webkitRelativePath,
-      folder: folderName,
-      file: file
-    };
+    return new Promise((resolve) => {
+      // Create an audio element to extract metadata
+      const audio = new Audio();
+      
+      // Set up event listeners
+      audio.addEventListener('loadedmetadata', () => {
+        // Get duration from the audio element
+        const duration = audio.duration || 0;
+        
+        // Try to extract artist and title from filename if format is "Artist - Title.mp3"
+        let artist = 'Unknown Artist';
+        let title = this.formatTitleFromFilename(file.name);
+        let album = folderName; // Use folder name as album name
+        
+        const parts = file.name.replace(/\.[^/.]+$/, "").split(" - ");
+        if (parts.length >= 2) {
+          artist = parts[0].trim();
+          title = parts.slice(1).join(" - ").trim();
+        }
+        
+        resolve({
+          title,
+          artist,
+          album,
+          duration,
+          path: file.webkitRelativePath,
+          folder: folderName,
+          file: file
+        });
+      });
+      
+      // Handle error
+      audio.addEventListener('error', () => {
+        resolve({
+          title: this.formatTitleFromFilename(file.name),
+          artist: 'Unknown Artist',
+          album: folderName,
+          duration: 0,
+          path: file.webkitRelativePath,
+          folder: folderName,
+          file: file
+        });
+      });
+      
+      // Create object URL and set as audio source
+      const objectURL = URL.createObjectURL(file);
+      audio.src = objectURL;
+      
+      // Clean up object URL after metadata is loaded
+      setTimeout(() => URL.revokeObjectURL(objectURL), 5000);
+    });
   }
 
   public async playRandomTrackFromFolder(folderName: string): Promise<void> {
@@ -185,26 +248,14 @@ class MusicLibrary {
   }
 
   public async playNextTrack(): Promise<void> {
-    // If we have a default folder, play from there
-    // Otherwise play from current folder
-    const targetFolder = this.currentFolder || this.defaultFolder;
-    if (targetFolder) {
-      await this.playRandomTrackFromFolder(targetFolder);
+    // Always play from default folder when track ends
+    if (this.defaultFolder) {
+      await this.playRandomTrackFromFolder(this.defaultFolder);
     } else {
       toast({
         variant: "destructive",
         title: "No music loaded",
         description: "Please add music to your library first."
-      });
-    }
-  }
-
-  public resetPlayedTracksInFolder(folderName: string): void {
-    if (this.playedTracks.has(folderName)) {
-      this.playedTracks.get(folderName)?.clear();
-      toast({
-        title: "Playlist reset",
-        description: `Reset play history for: ${folderName}`
       });
     }
   }
