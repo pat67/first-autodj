@@ -1,6 +1,7 @@
 
 import { toast } from '@/hooks/use-toast';
 import audioManager from './audioContext';
+import * as musicMetadata from 'music-metadata-browser';
 
 export interface TrackMetadata {
   title: string;
@@ -66,6 +67,14 @@ class MusicLibrary {
       // Process each folder
       for (const [folderName, folderFiles] of Object.entries(filesByFolder)) {
         const folderTracks: TrackMetadata[] = [];
+        
+        // Show loading toast for large collections
+        if (folderFiles.length > 10) {
+          toast({
+            title: "Processing music files",
+            description: `Reading metadata from ${folderFiles.length} files in ${folderName}...`
+          });
+        }
         
         for (const file of folderFiles) {
           try {
@@ -138,59 +147,85 @@ class MusicLibrary {
   }
 
   private async extractMetadata(file: File, folderName: string): Promise<TrackMetadata> {
-    return new Promise((resolve) => {
-      // Create an audio element to extract metadata
-      const audio = new Audio();
+    try {
+      // Use music-metadata-browser to extract ID3 tags and other metadata
+      const metadata = await musicMetadata.parseBlob(file);
       
-      // Set up event listeners
-      audio.addEventListener('loadedmetadata', () => {
-        // Get duration from the audio element
-        const duration = audio.duration || 0;
+      // Get common metadata
+      const title = metadata.common.title || this.formatTitleFromFilename(file.name);
+      const artist = metadata.common.artist || 'Unknown Artist';
+      const album = metadata.common.album || folderName;
+      
+      // Get duration (in seconds)
+      const duration = metadata.format.duration || 0;
+      
+      return {
+        title,
+        artist,
+        album,
+        duration,
+        path: file.webkitRelativePath,
+        folder: folderName,
+        file: file
+      };
+    } catch (error) {
+      console.error('Error parsing metadata:', error);
+      
+      // Fallback to basic extraction if metadata parsing fails
+      return new Promise((resolve) => {
+        // Create an audio element to extract duration
+        const audio = new Audio();
         
-        // Extract metadata from filename
-        let artist = 'Unknown Artist';
-        let title = this.formatTitleFromFilename(file.name);
-        let album = folderName; // Use folder name as album name by default
-        
-        // Try to extract artist and title from filename if format is "Artist - Title.mp3"
-        const cleanName = file.name.replace(/\.[^/.]+$/, "");
-        const parts = cleanName.split(" - ");
-        if (parts.length >= 2) {
-          artist = parts[0].trim();
-          title = parts.slice(1).join(" - ").trim();
-        }
-        
-        resolve({
-          title,
-          artist,
-          album,
-          duration,
-          path: file.webkitRelativePath,
-          folder: folderName,
-          file: file
+        // Set up event listeners
+        audio.addEventListener('loadedmetadata', () => {
+          // Get duration from the audio element
+          const duration = audio.duration || 0;
+          
+          // Extract metadata from filename
+          let artist = 'Unknown Artist';
+          let title = this.formatTitleFromFilename(file.name);
+          let album = folderName; // Use folder name as album name by default
+          
+          // Try to extract artist and title from filename if format is "Artist - Title.mp3"
+          const cleanName = file.name.replace(/\.[^/.]+$/, "");
+          const parts = cleanName.split(" - ");
+          if (parts.length >= 2) {
+            artist = parts[0].trim();
+            title = parts.slice(1).join(" - ").trim();
+          }
+          
+          resolve({
+            title,
+            artist,
+            album,
+            duration,
+            path: file.webkitRelativePath,
+            folder: folderName,
+            file: file
+          });
         });
-      });
-      
-      // Handle error
-      audio.addEventListener('error', () => {
-        resolve({
-          title: this.formatTitleFromFilename(file.name),
-          artist: 'Unknown Artist',
-          album: folderName,
-          duration: 0,
-          path: file.webkitRelativePath,
-          folder: folderName,
-          file: file
+        
+        // Handle error
+        audio.addEventListener('error', () => {
+          resolve({
+            title: this.formatTitleFromFilename(file.name),
+            artist: 'Unknown Artist',
+            album: folderName,
+            duration: 0,
+            path: file.webkitRelativePath,
+            folder: folderName,
+            file: file
+          });
         });
+        
+        // Create object URL and set as audio source
+        const objectURL = URL.createObjectURL(file);
+        audio.src = objectURL;
+        
+        // Clean up object URL after metadata is loaded
+        setTimeout(() => URL.revokeObjectURL(objectURL), 5000);
       });
-      
-      // Create object URL and set as audio source
-      const objectURL = URL.createObjectURL(file);
-      audio.src = objectURL;
-      
-      // Clean up object URL after metadata is loaded
-      setTimeout(() => URL.revokeObjectURL(objectURL), 5000);
-    });
+    }
   }
 
   public async playRandomTrackFromFolder(folderName: string): Promise<void> {
