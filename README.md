@@ -1,69 +1,50 @@
-# Welcome to your Lovable project
 
-## Project info
+# DJ Fusion Machine
 
-**URL**: https://lovable.dev/projects/26c53282-81e1-4e64-ab7b-e04b1b3b1fa6
+## A professional music management application for FIRST Robotics Competition events
 
-## How can I edit this code?
+DJ Fusion Machine is an open-source application designed to bring professional DJ-like music management to FRC events when a human DJ is unavailable. It reproduces the music selection technique that is taught to FRC DJs in Michigan.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- Plays tracks from a default playlist in randomized order
+- Interrupt the default playlist by pressing one of the playlist buttons
+- Automatically returns to the default playlist after any track ends
+- Prevents track repetition until all tracks in a playlist have been played once
+- Smooth crossfading between tracks
+- Track display with time information
+- Volume control with mute function
+- Simple, intuitive interface for event operation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/26c53282-81e1-4e64-ab7b-e04b1b3b1fa6) and start prompting.
+## Usage Instructions
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Add Music**: Start by adding your music folders - each folder will become a separate playlist
+2. **Set Default Playlist**: Choose which playlist should be the default (automatic after adding the first folder)
+3. **Play Music**: Click on any playlist to start playing a random track from that folder
+4. **Reset Playlist**: Click "Reset" on a playlist to reset its track history and allow repeating tracks
+5. **Volume Control**: Use the volume slider or mute button to control playback volume
+6. **Skip Track**: Use the next track button to skip to another random track
 
-**Use your preferred IDE**
+## Technical Details
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+DJ Fusion Machine is a browser-based application built using:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- React for the UI
+- Web Audio API for audio processing and crossfading
+- HTML5 File API for local music access
 
-Follow these steps:
+## For Developers
+
+This project was built with Vite, TypeScript, React, and Tailwind CSS. To run the development server:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## License
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/26c53282-81e1-4e64-ab7b-e04b1b3b1fa6) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+This project is open-source and freely available for use at FIRST Robotics Competition events around Michigan and the rest of the world.
