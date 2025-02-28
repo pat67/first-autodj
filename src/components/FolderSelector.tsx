@@ -61,6 +61,8 @@ export function FolderSelector({ onFoldersAdded }: FolderSelectorProps) {
         ref={folderInputRef}
         onChange={handleFolderInputChange}
         className="hidden"
+        // Add the directory attributes as HTML attributes instead of props to avoid TypeScript errors
+        // @ts-ignore - Ignoring TypeScript errors for these non-standard attributes
         webkitdirectory="true"
         directory=""
         multiple
