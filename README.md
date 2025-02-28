@@ -1,9 +1,9 @@
 
-# DJ Fusion Machine
+# FIRST AutoDJ
 
-## A professional music management application for FIRST Robotics Competition events
+## A music playback application for FIRST Robotics Competition events
 
-DJ Fusion Machine is an open-source application designed to bring professional DJ-like music management to FRC events when a human DJ is unavailable. It reproduces the music selection technique that is taught to FRC DJs in Michigan.
+FIRST AutoDJ is an open-source application designed to bring professional DJ-like music management to FRC events when a human DJ is unavailable. It reproduces the music selection technique that is taught to FRC DJs in Michigan.
 
 ## Features
 
@@ -27,7 +27,7 @@ DJ Fusion Machine is an open-source application designed to bring professional D
 
 ## Technical Details
 
-DJ Fusion Machine is a browser-based application built using:
+FIRST AutoDJ is a browser-based application built using:
 
 - React for the UI
 - Web Audio API for audio processing and crossfading
