@@ -32,7 +32,7 @@ class MusicLibrary {
 
   public async addFolder(files: FileList): Promise<void> {
     try {
-      // Group files by folder
+      // Group files by subfolder
       const filesByFolder: Record<string, File[]> = {};
       
       for (let i = 0; i < files.length; i++) {
@@ -43,11 +43,18 @@ class MusicLibrary {
           continue;
         }
         
-        // Extract folder name from path
+        // Extract folder path from file path
         const pathParts = file.webkitRelativePath.split('/');
         if (pathParts.length < 2) continue;
         
-        const folderName = pathParts[0];
+        // The main folder is pathParts[0]
+        // We want to organize by the first subfolder, which would be pathParts[1] if it exists
+        let folderName = pathParts[0]; // Default to the main folder
+        
+        // If there's a subfolder structure (e.g., "MusicFolder/Rock/song.mp3")
+        if (pathParts.length > 2) {
+          folderName = pathParts[1]; // Use the first subfolder as the playlist name
+        }
         
         if (!filesByFolder[folderName]) {
           filesByFolder[folderName] = [];
@@ -95,7 +102,7 @@ class MusicLibrary {
       
       toast({
         title: "Music loaded successfully",
-        description: `Added ${Object.keys(filesByFolder).length} folders to your library.`
+        description: `Added ${Object.keys(filesByFolder).length} playlists to your library.`
       });
       
     } catch (error) {
@@ -140,12 +147,14 @@ class MusicLibrary {
         // Get duration from the audio element
         const duration = audio.duration || 0;
         
-        // Try to extract artist and title from filename if format is "Artist - Title.mp3"
+        // Extract metadata from filename
         let artist = 'Unknown Artist';
         let title = this.formatTitleFromFilename(file.name);
-        let album = folderName; // Use folder name as album name
+        let album = folderName; // Use folder name as album name by default
         
-        const parts = file.name.replace(/\.[^/.]+$/, "").split(" - ");
+        // Try to extract artist and title from filename if format is "Artist - Title.mp3"
+        const cleanName = file.name.replace(/\.[^/.]+$/, "");
+        const parts = cleanName.split(" - ");
         if (parts.length >= 2) {
           artist = parts[0].trim();
           title = parts.slice(1).join(" - ").trim();

@@ -46,14 +46,14 @@ export function FolderSelector({ onFoldersAdded }: FolderSelectorProps) {
     <div className="text-center p-8 bg-player-light rounded-xl shadow-lg">
       <h2 className="text-2xl font-bold mb-4 text-player-text">Add Your Music</h2>
       <p className="text-player-text/70 mb-8">
-        Select folders containing your music files to create playlists
+        Select your main music folder containing subfolders to create playlists
       </p>
       
       <Button
         onClick={handleFolderSelect}
         className="bg-player-accent hover:bg-player-accent/80 text-white px-6 py-3 rounded-lg"
       >
-        Select Music Folders
+        Select Music Folder
       </Button>
       
       <input
@@ -70,6 +70,10 @@ export function FolderSelector({ onFoldersAdded }: FolderSelectorProps) {
       
       <p className="mt-6 text-sm text-player-text/60">
         Supported formats: MP3, WAV, AAC, FLAC, and more
+      </p>
+      
+      <p className="mt-2 text-sm text-player-text/60">
+        The app will create playlists based on the subfolders in your main music folder
       </p>
     </div>
   );
