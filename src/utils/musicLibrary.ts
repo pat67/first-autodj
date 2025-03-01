@@ -1,7 +1,7 @@
 
 import { toast } from '@/hooks/use-toast';
 import audioManager from './audioContext';
-import * as musicMetadata from 'music-metadata-browser';
+import * as mm from 'music-metadata';
 
 export interface TrackMetadata {
   title: string;
@@ -148,16 +148,24 @@ class MusicLibrary {
 
   private async extractMetadata(file: File, folderName: string): Promise<TrackMetadata> {
     try {
-      // Use music-metadata-browser to extract ID3 tags and other metadata
-      const metadata = await musicMetadata.parseBlob(file);
+      // Convert File to ArrayBuffer for processing with music-metadata
+      const arrayBuffer = await file.arrayBuffer();
       
-      // Get common metadata
+      // Use music-metadata to parse the file
+      const metadata = await mm.parseBuffer(
+        new Uint8Array(arrayBuffer),
+        { mimeType: file.type }
+      );
+      
+      // Extract common metadata fields with fallbacks
       const title = metadata.common.title || this.formatTitleFromFilename(file.name);
-      const artist = metadata.common.artist || 'Unknown Artist';
+      const artist = metadata.common.artist || this.tryExtractArtistFromFilename(file.name);
       const album = metadata.common.album || folderName;
       
-      // Get duration (in seconds)
+      // Get duration in seconds
       const duration = metadata.format.duration || 0;
+      
+      console.log('Successfully extracted metadata:', { title, artist, album, duration });
       
       return {
         title,
@@ -172,60 +180,73 @@ class MusicLibrary {
       console.error('Error parsing metadata:', error);
       
       // Fallback to basic extraction if metadata parsing fails
-      return new Promise((resolve) => {
-        // Create an audio element to extract duration
-        const audio = new Audio();
-        
-        // Set up event listeners
-        audio.addEventListener('loadedmetadata', () => {
-          // Get duration from the audio element
-          const duration = audio.duration || 0;
-          
-          // Extract metadata from filename
-          let artist = 'Unknown Artist';
-          let title = this.formatTitleFromFilename(file.name);
-          let album = folderName; // Use folder name as album name by default
-          
-          // Try to extract artist and title from filename if format is "Artist - Title.mp3"
-          const cleanName = file.name.replace(/\.[^/.]+$/, "");
-          const parts = cleanName.split(" - ");
-          if (parts.length >= 2) {
-            artist = parts[0].trim();
-            title = parts.slice(1).join(" - ").trim();
-          }
-          
-          resolve({
-            title,
-            artist,
-            album,
-            duration,
-            path: file.webkitRelativePath,
-            folder: folderName,
-            file: file
-          });
-        });
-        
-        // Handle error
-        audio.addEventListener('error', () => {
-          resolve({
-            title: this.formatTitleFromFilename(file.name),
-            artist: 'Unknown Artist',
-            album: folderName,
-            duration: 0,
-            path: file.webkitRelativePath,
-            folder: folderName,
-            file: file
-          });
-        });
-        
-        // Create object URL and set as audio source
-        const objectURL = URL.createObjectURL(file);
-        audio.src = objectURL;
-        
-        // Clean up object URL after metadata is loaded
-        setTimeout(() => URL.revokeObjectURL(objectURL), 5000);
-      });
+      return this.fallbackMetadataExtraction(file, folderName);
     }
+  }
+  
+  // Try to extract artist from filename (Artist - Title.mp3 format)
+  private tryExtractArtistFromFilename(filename: string): string {
+    const cleanName = filename.replace(/\.[^/.]+$/, ""); // Remove extension
+    const parts = cleanName.split(" - ");
+    
+    if (parts.length >= 2) {
+      return parts[0].trim();
+    }
+    
+    return 'Unknown Artist';
+  }
+  
+  // Fallback metadata extraction when ID3 tags can't be read
+  private async fallbackMetadataExtraction(file: File, folderName: string): Promise<TrackMetadata> {
+    return new Promise((resolve) => {
+      // Create audio element to get duration
+      const audio = new Audio();
+      
+      // Set up event listeners
+      audio.addEventListener('loadedmetadata', () => {
+        // Get duration
+        const duration = audio.duration || 0;
+        
+        // Try to extract artist and title from filename
+        let artist = this.tryExtractArtistFromFilename(file.name);
+        let title = this.formatTitleFromFilename(file.name);
+        let album = folderName;
+        
+        console.log('Using fallback metadata extraction:', { title, artist, album, duration });
+        
+        resolve({
+          title,
+          artist,
+          album,
+          duration,
+          path: file.webkitRelativePath,
+          folder: folderName,
+          file: file
+        });
+      });
+      
+      // Handle errors
+      audio.addEventListener('error', () => {
+        console.warn('Audio element failed to load for metadata extraction:', file.name);
+        
+        resolve({
+          title: this.formatTitleFromFilename(file.name),
+          artist: 'Unknown Artist',
+          album: folderName,
+          duration: 0,
+          path: file.webkitRelativePath,
+          folder: folderName,
+          file: file
+        });
+      });
+      
+      // Create object URL and set as audio source
+      const objectURL = URL.createObjectURL(file);
+      audio.src = objectURL;
+      
+      // Clean up object URL after metadata is loaded or on error
+      setTimeout(() => URL.revokeObjectURL(objectURL), 5000);
+    });
   }
 
   public async playRandomTrackFromFolder(folderName: string): Promise<void> {
