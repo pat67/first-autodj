@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -20,11 +19,9 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
   const [isDraggingSeeker, setIsDraggingSeeker] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(1);
 
-  // Create refs for intervals
   const timeUpdateIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Set up track change listener
     musicLibrary.onTrackChange((track) => {
       setCurrentTrack(track);
       if (track) {
@@ -33,16 +30,12 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
       }
     });
     
-    // Set up track end listener
     audioManager.onTrackEnd(() => {
-      // Play next track from default folder
       musicLibrary.playNextTrack();
     });
     
-    // Start time update interval
     startTimeUpdateInterval();
     
-    // Clean up on unmount
     return () => {
       if (timeUpdateIntervalRef.current !== null) {
         window.clearInterval(timeUpdateIntervalRef.current);
@@ -71,7 +64,6 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
         audioManager.resume();
         setIsPlaying(true);
       } else {
-        // No track loaded, try to play one
         if (musicLibrary.hasMusic()) {
           musicLibrary.playNextTrack();
         } else {
@@ -90,7 +82,6 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
     setVolume(newVolume);
     audioManager.setVolume(newVolume);
     
-    // If volume is set above 0, we're unmuted
     if (newVolume > 0 && isMuted) {
       setIsMuted(false);
     } else if (newVolume === 0 && !isMuted) {
@@ -100,12 +91,10 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
 
   const handleMuteToggle = () => {
     if (isMuted) {
-      // Unmute - restore previous volume
       setIsMuted(false);
       setVolume(previousVolume);
       audioManager.setVolume(previousVolume);
     } else {
-      // Mute - save current volume and set to 0
       setPreviousVolume(volume);
       setIsMuted(true);
       setVolume(0);
@@ -140,17 +129,13 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
   return (
     <div className="w-full bg-player rounded-xl shadow-lg overflow-hidden transition-all duration-300 animate-fade-in">
       <div className="p-6">
-        {/* Track Info */}
-        <div className="mb-4 text-player-text">
+        <div className="mb-4 text-player-text text-center">
           {currentTrack ? (
             <>
               <div className="text-xs uppercase tracking-wider text-player-text/70 mb-1">Now Playing</div>
               <h2 className="text-2xl font-bold truncate">{currentTrack.title}</h2>
               <div className="text-player-text/80 mt-1">
                 <span className="truncate">{currentTrack.artist}</span>
-                {currentTrack.album && (
-                  <span className="opacity-60 text-sm"> • {currentTrack.album}</span>
-                )}
               </div>
             </>
           ) : (
@@ -163,7 +148,6 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
           )}
         </div>
 
-        {/* Progress Bar */}
         <div className="my-4">
           <Slider
             value={[currentTime]}
@@ -181,7 +165,6 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
           </div>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center justify-between mt-6">
           <div className="flex items-center space-x-2">
             <Button
@@ -225,8 +208,7 @@ export function MusicPlayer({ onRequestFolderSelect }: MusicPlayerProps) {
             </Button>
           </div>
 
-          {/* Shuffle button removed */}
-          <div className="w-10"></div> {/* Empty div to maintain layout */}
+          <div className="w-10"></div>
         </div>
       </div>
     </div>

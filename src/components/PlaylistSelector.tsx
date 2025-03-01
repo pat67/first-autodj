@@ -1,6 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 import musicLibrary from '@/utils/musicLibrary';
 
 interface PlaylistSelectorProps {
@@ -35,7 +42,28 @@ export function PlaylistSelector({ onRequestFolderSelect }: PlaylistSelectorProp
     <div className="bg-player-light rounded-xl p-6 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-medium text-player-text">Playlists</h3>
-        {/* "Add More" button removed */}
+        {/* Dropdown for managing default playlist */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-player-text">
+              <MoreHorizontal size={18} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-player-light border-player-accent text-player-text">
+            <div className="px-2 py-1.5 text-xs font-medium text-player-text/70">
+              Set Default Playlist
+            </div>
+            {folders.map((folder) => (
+              <DropdownMenuItem 
+                key={`default-${folder}`}
+                className={`cursor-pointer ${folder === defaultFolder ? 'bg-player-accent/30' : ''}`}
+                onClick={() => handleSetDefault(folder)}
+              >
+                {folder} {folder === defaultFolder && "(Current)"}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -43,34 +71,11 @@ export function PlaylistSelector({ onRequestFolderSelect }: PlaylistSelectorProp
           <div 
             key={folder}
             onClick={() => handlePlayFolder(folder)}
-            className={`
-              relative p-4 rounded-lg cursor-pointer transition-all
-              ${folder === defaultFolder 
-                ? 'bg-player-accent/30 hover:bg-player-accent/40' 
-                : 'bg-player/30 hover:bg-player-accent/20'
-              }
-              text-player-text
-            `}
+            className="p-4 rounded-lg cursor-pointer transition-all bg-player/30 hover:bg-player-accent/20 text-player-text"
           >
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center text-center">
               <span className="font-medium truncate">{folder}</span>
-              <div className="flex mt-2">
-                <button 
-                  className="text-xs text-player-text/70 hover:text-player-text"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSetDefault(folder);
-                  }}
-                >
-                  {folder === defaultFolder ? "Default" : "Set as Default"}
-                </button>
-              </div>
             </div>
-            {folder === defaultFolder && (
-              <div className="absolute top-2 right-2">
-                <span className="inline-block w-2 h-2 bg-green-400 rounded-full"></span>
-              </div>
-            )}
           </div>
         ))}
       </div>
