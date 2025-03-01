@@ -109,7 +109,7 @@ export function MusicPlayer({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
   return <div className="w-full bg-player rounded-xl shadow-lg overflow-hidden transition-all duration-300 animate-fade-in">
-      <div className="p-6">
+      <div className="p-6 bg-player-light">
         <div className="mb-4 text-player-text text-center">
           {currentTrack ? <>
               <div className="text-xs uppercase tracking-wider text-player-text/70 mb-1">Now Playing</div>
@@ -141,11 +141,11 @@ export function MusicPlayer({
             <Slider value={[volume]} min={0} max={1} step={0.01} onValueChange={handleVolumeChange} className="w-24 [&_.absolute]:bg-gray-500" />
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 mx-[8px]">
             <Button size="icon" variant="ghost" onClick={handlePlayPause} className="h-12 w-12 rounded-full text-player-text bg-slate-900 hover:bg-slate-800">
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </Button>
-            <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full bg-player-accent/10 hover:bg-player-accent/30 text-player-text" onClick={handleNextTrack}>
+            <Button size="icon" variant="ghost" onClick={handleNextTrack} className="h-10 w-10 rounded-full text-player-text bg-slate-900 hover:bg-slate-800">
               <SkipForward size={18} />
             </Button>
           </div>
