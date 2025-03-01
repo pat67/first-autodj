@@ -1,16 +1,40 @@
+
 import React, { useState } from 'react';
 import MusicPlayer from '@/components/MusicPlayer';
 import PlaylistSelector from '@/components/PlaylistSelector';
 import FolderSelector from '@/components/FolderSelector';
 import musicLibrary from '@/utils/musicLibrary';
+
 const Index = () => {
   const [showFolderSelector, setShowFolderSelector] = useState(!musicLibrary.hasMusic());
+  const [currentFolder, setCurrentFolder] = useState<string | null>(musicLibrary.getDefaultFolder());
+  
   const handleFoldersAdded = () => {
     setShowFolderSelector(false);
+    setCurrentFolder(musicLibrary.getDefaultFolder());
   };
+  
   const handleRequestFolderSelect = () => {
     setShowFolderSelector(true);
   };
+  
+  // Update current folder when track changes
+  React.useEffect(() => {
+    const trackChangeHandler = () => {
+      const track = musicLibrary.getCurrentTrack();
+      if (track) {
+        setCurrentFolder(track.folder);
+      }
+    };
+    
+    musicLibrary.onTrackChange(trackChangeHandler);
+    
+    return () => {
+      // Clean up by setting callback to null
+      musicLibrary.onTrackChange(() => {});
+    };
+  }, []);
+  
   return <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-6">
       <header className="max-w-4xl mx-auto mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-center">FIRST AutoDJ</h1>
@@ -20,7 +44,10 @@ const Index = () => {
       <main className="max-w-4xl mx-auto space-y-8">
         {showFolderSelector ? <FolderSelector onFoldersAdded={handleFoldersAdded} /> : <>
             <MusicPlayer onRequestFolderSelect={handleRequestFolderSelect} />
-            <PlaylistSelector onRequestFolderSelect={handleRequestFolderSelect} />
+            <PlaylistSelector 
+              onRequestFolderSelect={handleRequestFolderSelect} 
+              currentFolder={currentFolder}
+            />
           </>}
       </main>
       
@@ -29,4 +56,5 @@ const Index = () => {
       </footer>
     </div>;
 };
+
 export default Index;
