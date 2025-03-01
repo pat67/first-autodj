@@ -1,48 +1,27 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
 
-import React, { useState } from 'react';
-import './App.css';
-import MusicPlayer from './components/MusicPlayer';
-import PlaylistSelector from './components/PlaylistSelector';
-import FolderSelector from './components/FolderSelector';
-import musicLibrary from './utils/musicLibrary';
+const queryClient = new QueryClient();
 
-function App() {
-  const [showFolderSelect, setShowFolderSelect] = useState(false);
-  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
-  
-  // Subscribe to track changes to update the current folder
-  React.useEffect(() => {
-    musicLibrary.onTrackChange(track => {
-      if (track) {
-        setCurrentFolder(track.folder);
-      }
-    });
-  }, []);
-
-  const handleRequestFolderSelect = () => {
-    setShowFolderSelect(true);
-  };
-
-  const handleFolderSelectClose = () => {
-    setShowFolderSelect(false);
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <h1 className="text-3xl font-bold text-center mb-8">Music Player</h1>
-      
-      <MusicPlayer onRequestFolderSelect={handleRequestFolderSelect} />
-      
-      <PlaylistSelector 
-        onRequestFolderSelect={handleRequestFolderSelect}
-        currentFolder={currentFolder}
-      />
-      
-      {showFolderSelect && (
-        <FolderSelector onClose={handleFolderSelectClose} />
-      )}
-    </div>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

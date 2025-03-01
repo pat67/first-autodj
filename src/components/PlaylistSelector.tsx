@@ -1,30 +1,22 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import musicLibrary from '@/utils/musicLibrary';
-
 interface PlaylistSelectorProps {
   onRequestFolderSelect: () => void;
-  currentFolder: string | null;
 }
-
 export function PlaylistSelector({
-  onRequestFolderSelect,
-  currentFolder
+  onRequestFolderSelect
 }: PlaylistSelectorProps) {
   const folders = musicLibrary.getFolders();
   const defaultFolder = musicLibrary.getDefaultFolder();
-  
   const handlePlayFolder = (folderName: string) => {
     musicLibrary.playRandomTrackFromFolder(folderName);
   };
-  
   const handleSetDefault = (folderName: string) => {
     musicLibrary.setDefaultFolder(folderName);
   };
-  
   if (folders.length === 0) {
     return <div className="bg-player-light rounded-xl p-6 text-center text-player-text shadow-lg">
         <h3 className="text-xl font-medium mb-4">No Playlists Available</h3>
@@ -34,7 +26,6 @@ export function PlaylistSelector({
         </Button>
       </div>;
   }
-  
   return <div className="bg-player-light rounded-xl p-6 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-medium text-player-text">Playlists</h3>
@@ -57,21 +48,12 @@ export function PlaylistSelector({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {folders.map(folder => (
-          <div 
-            key={folder} 
-            onClick={() => handlePlayFolder(folder)} 
-            className={`p-4 rounded-lg cursor-pointer transition-all text-player-text bg-slate-800 ${
-              folder === currentFolder ? 'ring-2 ring-gray-500' : ''
-            }`}
-          >
+        {folders.map(folder => <div key={folder} onClick={() => handlePlayFolder(folder)} className="p-4 rounded-lg cursor-pointer transition-all text-player-text bg-slate-800">
             <div className="flex flex-col items-center text-center">
               <span className="font-medium truncate">{folder}</span>
             </div>
-          </div>
-        ))}
+          </div>)}
       </div>
     </div>;
 }
-
 export default PlaylistSelector;
