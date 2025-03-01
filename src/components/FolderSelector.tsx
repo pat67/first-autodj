@@ -5,10 +5,11 @@ import { toast } from '@/hooks/use-toast';
 import musicLibrary from '@/utils/musicLibrary';
 
 interface FolderSelectorProps {
-  onFoldersAdded: () => void;
+  onFoldersAdded?: () => void;
+  onClose: () => void;
 }
 
-export function FolderSelector({ onFoldersAdded }: FolderSelectorProps) {
+export function FolderSelector({ onFoldersAdded, onClose }: FolderSelectorProps) {
   const folderInputRef = useRef<HTMLInputElement>(null);
 
   const handleFolderSelect = async () => {
@@ -26,7 +27,10 @@ export function FolderSelector({ onFoldersAdded }: FolderSelectorProps) {
     
     try {
       await musicLibrary.addFolder(files);
-      onFoldersAdded();
+      if (onFoldersAdded) {
+        onFoldersAdded();
+      }
+      onClose(); // Close the folder selector after adding folders
       
       // Reset the input
       if (folderInputRef.current) {
