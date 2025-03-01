@@ -1,12 +1,15 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause, SkipForward, Volume, VolumeX } from "lucide-react";
 import audioManager from '@/utils/audioContext';
 import musicLibrary, { TrackMetadata } from '@/utils/musicLibrary';
+
 interface MusicPlayerProps {
   onRequestFolderSelect: () => void;
 }
+
 export function MusicPlayer({
   onRequestFolderSelect
 }: MusicPlayerProps) {
@@ -19,6 +22,7 @@ export function MusicPlayer({
   const [isDraggingSeeker, setIsDraggingSeeker] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(1);
   const timeUpdateIntervalRef = useRef<number | null>(null);
+
   useEffect(() => {
     musicLibrary.onTrackChange(track => {
       setCurrentTrack(track);
@@ -27,26 +31,32 @@ export function MusicPlayer({
         setIsPlaying(true);
       }
     });
+    
     audioManager.onTrackEnd(() => {
       musicLibrary.playNextTrack();
     });
+    
     startTimeUpdateInterval();
+    
     return () => {
       if (timeUpdateIntervalRef.current !== null) {
         window.clearInterval(timeUpdateIntervalRef.current);
       }
     };
   }, []);
+
   const startTimeUpdateInterval = () => {
     if (timeUpdateIntervalRef.current !== null) {
       window.clearInterval(timeUpdateIntervalRef.current);
     }
+    
     timeUpdateIntervalRef.current = window.setInterval(() => {
       if (!isDraggingSeeker) {
         setCurrentTime(audioManager.getCurrentTime());
       }
     }, 100);
   };
+
   const handlePlayPause = () => {
     if (isPlaying) {
       audioManager.pause();
@@ -64,19 +74,23 @@ export function MusicPlayer({
       }
     }
   };
+
   const handleNextTrack = () => {
     musicLibrary.playNextTrack();
   };
+
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
     setVolume(newVolume);
     audioManager.setVolume(newVolume);
+    
     if (newVolume > 0 && isMuted) {
       setIsMuted(false);
     } else if (newVolume === 0 && !isMuted) {
       setIsMuted(true);
     }
   };
+
   const handleMuteToggle = () => {
     if (isMuted) {
       setIsMuted(false);
@@ -89,25 +103,31 @@ export function MusicPlayer({
       audioManager.setVolume(0);
     }
   };
+
   const handleSeek = (value: number[]) => {
     const seekTime = value[0];
     setCurrentTime(seekTime);
+    
     if (!isDraggingSeeker) {
       audioManager.seekTo(seekTime);
     }
   };
+
   const handleSeekStart = () => {
     setIsDraggingSeeker(true);
   };
+
   const handleSeekEnd = () => {
     setIsDraggingSeeker(false);
     audioManager.seekTo(currentTime);
   };
+
   const formatTime = (timeInSeconds: number): string => {
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
+
   return <div className="w-full bg-player rounded-xl shadow-lg overflow-hidden transition-all duration-300 animate-fade-in">
       <div className="p-6 bg-player-light">
         <div className="mb-4 text-player-text text-center">
@@ -141,7 +161,7 @@ export function MusicPlayer({
             <Slider value={[volume]} min={0} max={1} step={0.01} onValueChange={handleVolumeChange} className="w-24 [&_.absolute]:bg-gray-500" />
           </div>
 
-          <div className="flex items-center space-x-4 mx-[8px]">
+          <div className="flex items-center space-x-4 justify-center flex-1">
             <Button size="icon" variant="ghost" onClick={handlePlayPause} className="h-12 w-12 rounded-full text-player-text bg-slate-900 hover:bg-slate-800">
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </Button>
@@ -150,9 +170,11 @@ export function MusicPlayer({
             </Button>
           </div>
 
-          <div className="w-10"></div>
+          {/* Empty div for spacing to maintain layout balance */}
+          <div className="w-[108px]"></div>
         </div>
       </div>
     </div>;
 }
+
 export default MusicPlayer;
