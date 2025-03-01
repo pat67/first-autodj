@@ -48,7 +48,7 @@ export function PlaylistSelector({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {folders.map(folder => <div key={folder} onClick={() => handlePlayFolder(folder)} className="p-4 rounded-lg cursor-pointer transition-all text-player-text bg-slate-700">
+        {folders.map(folder => <div key={folder} onClick={() => handlePlayFolder(folder)} className="p-4 rounded-lg cursor-pointer transition-all text-player-text bg-slate-800">
             <div className="flex flex-col items-center text-center">
               <span className="font-medium truncate">{folder}</span>
             </div>
