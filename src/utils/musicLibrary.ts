@@ -1,4 +1,3 @@
-
 import { toast } from '@/hooks/use-toast';
 import audioManager from './audioContext';
 import * as mm from 'music-metadata';
@@ -124,7 +123,6 @@ class MusicLibrary {
     }
   }
 
-  // Helper method to format title from filename
   private formatTitleFromFilename(filename: string): string {
     // Remove file extension
     let title = filename.replace(/\.[^/.]+$/, "");
@@ -184,7 +182,6 @@ class MusicLibrary {
     }
   }
   
-  // Try to extract artist from filename (Artist - Title.mp3 format)
   private tryExtractArtistFromFilename(filename: string): string {
     const cleanName = filename.replace(/\.[^/.]+$/, ""); // Remove extension
     const parts = cleanName.split(" - ");
@@ -196,7 +193,6 @@ class MusicLibrary {
     return 'Unknown Artist';
   }
   
-  // Fallback metadata extraction when ID3 tags can't be read
   private async fallbackMetadataExtraction(file: File, folderName: string): Promise<TrackMetadata> {
     return new Promise((resolve) => {
       // Create audio element to get duration
