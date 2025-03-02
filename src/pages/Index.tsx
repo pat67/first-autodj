@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MusicPlayer from '@/components/MusicPlayer';
 import PlaylistSelector from '@/components/PlaylistSelector';
 import FolderSelector from '@/components/FolderSelector';
@@ -7,7 +7,7 @@ import musicLibrary from '@/utils/musicLibrary';
 
 const Index = () => {
   const [showFolderSelector, setShowFolderSelector] = useState(!musicLibrary.hasMusic());
-  const [currentFolder, setCurrentFolder] = useState<string | null>(musicLibrary.getDefaultFolder());
+  const [currentFolder, setCurrentFolder] = useState<string | null>(musicLibrary.getCurrentFolder() || musicLibrary.getDefaultFolder());
   
   const handleFoldersAdded = () => {
     setShowFolderSelector(false);
@@ -19,12 +19,12 @@ const Index = () => {
   };
   
   // Update current folder when track changes
-  React.useEffect(() => {
+  useEffect(() => {
     const trackChangeHandler = () => {
-      const track = musicLibrary.getCurrentTrack();
-      if (track) {
-        setCurrentFolder(track.folder);
-      }
+      // Get the current folder directly from musicLibrary
+      const folder = musicLibrary.getCurrentFolder();
+      setCurrentFolder(folder);
+      console.log("Current folder updated:", folder);
     };
     
     musicLibrary.onTrackChange(trackChangeHandler);
