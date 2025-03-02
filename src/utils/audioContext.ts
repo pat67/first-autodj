@@ -47,7 +47,7 @@ class AudioManager {
 
     // If we already have a track playing, prepare to crossfade
     if (this.currentSource && this.playing) {
-      // Set up the next track
+      // Create a new buffer source for the next track
       this.nextBuffer = buffer;
       this.nextSource = this.audioContext.createBufferSource();
       this.nextSource.buffer = buffer;
@@ -56,28 +56,36 @@ class AudioManager {
       const nextGain = this.audioContext.createGain();
       nextGain.gain.value = 0;
       
-      // Connect our nodes
+      // Connect the next source to its gain node and then to the destination
       this.nextSource.connect(nextGain);
       nextGain.connect(this.audioContext.destination);
-      
-      // Start the next track (silent)
-      this.nextSource.start(0, startAtTime);
       
       // Get current time from audio context
       const now = this.audioContext.currentTime;
       
-      // Fade out current track
-      this.gainNode.gain.linearRampToValueAtTime(0, now + this.crossfadeDuration);
+      // Store the existing gain node for cleanup
+      const oldGain = this.gainNode;
       
-      // Fade in next track
+      // Fade out current track - fix: ensure we actually fade out the current track
+      oldGain.gain.setValueAtTime(this.volume, now);
+      oldGain.gain.linearRampToValueAtTime(0, now + this.crossfadeDuration);
+      
+      // Fade in next track - start from 0 and ramp up to the current volume
+      nextGain.gain.setValueAtTime(0, now);
       nextGain.gain.linearRampToValueAtTime(this.volume, now + this.crossfadeDuration);
       
-      // After crossfade, clean up old track
+      // Start the next track (will start silent due to gain = 0)
+      this.nextSource.start(0, startAtTime);
+      
+      // After crossfade duration, clean up old track
       setTimeout(() => {
+        // Disconnect and clean up old source
         if (this.currentSource) {
           this.currentSource.disconnect();
+          this.currentSource.stop();
           this.currentSource = null;
         }
+        oldGain.disconnect();
         
         // The next source becomes the current source
         this.currentSource = this.nextSource;
@@ -97,13 +105,14 @@ class AudioManager {
       // First track or starting after being stopped
       if (this.currentSource) {
         this.currentSource.disconnect();
+        this.currentSource.stop();
       }
       
       this.currentSource = this.audioContext.createBufferSource();
       this.currentBuffer = buffer;
       this.currentSource.buffer = buffer;
       
-      // Reset gain node
+      // Reset gain node to current volume
       this.gainNode.gain.value = this.volume;
       
       // Connect and start
