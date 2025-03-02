@@ -49,7 +49,7 @@ export function HowToDialog() {
                 <li><strong>Default Playlist:</strong> The app automatically returns to the default playlist after playing tracks from other playlists.</li>
                 <li><strong>Selecting a Playlist:</strong> Click any playlist to immediately play a random track from that folder.</li>
                 <li><strong>Set as Default:</strong> Make any playlist the default by clicking the "Set as Default" button.</li>
-                <li><strong>Reset Playlist:</strong> Reset a playlist's track history so tracks can repeat again.</li>
+                
               </ul>
             </div>
           </section>
