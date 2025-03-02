@@ -5,6 +5,8 @@ import { Slider } from "@/components/ui/slider";
 import { Play, Pause, SkipForward, Volume, VolumeX } from "lucide-react";
 import audioManager from '@/utils/audioContext';
 import musicLibrary, { TrackMetadata } from '@/utils/musicLibrary';
+import SettingsDialog from './SettingsDialog';
+import HowToDialog from './HowToDialog';
 
 interface MusicPlayerProps {
   onRequestFolderSelect: () => void;
@@ -130,19 +132,26 @@ export function MusicPlayer({
 
   return <div className="w-full bg-player rounded-xl shadow-lg overflow-hidden transition-all duration-300 animate-fade-in">
       <div className="p-6 bg-player-light">
-        <div className="mb-4 text-player-text text-center">
-          {currentTrack ? <>
-              <div className="text-xs uppercase tracking-wider text-player-text/70 mb-1">Now Playing</div>
-              <h2 className="text-2xl font-bold truncate">{currentTrack.title}</h2>
-              <div className="text-player-text/80 mt-1">
-                <span className="truncate">{currentTrack.artist}</span>
-              </div>
-            </> : <div className="text-center py-4">
-              <h2 className="text-xl font-medium">No Track Selected</h2>
-              <p className="text-player-text/70 text-sm mt-1">
-                Select a playlist or add music to begin
-              </p>
-            </div>}
+        <div className="relative">
+          <div className="absolute right-0 top-0 flex space-x-1">
+            <SettingsDialog />
+            <HowToDialog />
+          </div>
+          
+          <div className="mb-4 text-player-text text-center">
+            {currentTrack ? <>
+                <div className="text-xs uppercase tracking-wider text-player-text/70 mb-1">Now Playing</div>
+                <h2 className="text-2xl font-bold truncate">{currentTrack.title}</h2>
+                <div className="text-player-text/80 mt-1">
+                  <span className="truncate">{currentTrack.artist}</span>
+                </div>
+              </> : <div className="text-center py-4">
+                <h2 className="text-xl font-medium">No Track Selected</h2>
+                <p className="text-player-text/70 text-sm mt-1">
+                  Select a playlist or add music to begin
+                </p>
+              </div>}
+          </div>
         </div>
 
         <div className="my-4">

@@ -46,7 +46,7 @@ class AudioManager {
     }
 
     // If we already have a track playing, prepare to crossfade
-    if (this.currentSource && this.playing) {
+    if (this.currentSource && this.playing && this.crossfadeDuration > 0) {
       // Create a new buffer source for the next track
       this.nextBuffer = buffer;
       this.nextSource = this.audioContext.createBufferSource();
@@ -102,7 +102,7 @@ class AudioManager {
         this.setTrackEndTimer();
       }, this.crossfadeDuration * 1000);
     } else {
-      // First track or starting after being stopped
+      // First track, starting after being stopped, or crossfade disabled
       if (this.currentSource) {
         this.currentSource.disconnect();
         this.currentSource.stop();
@@ -231,7 +231,8 @@ class AudioManager {
   }
 
   public setCrossfadeDuration(seconds: number): void {
-    this.crossfadeDuration = seconds;
+    this.crossfadeDuration = Math.max(0, Math.min(10, seconds));
+    console.log(`Crossfade duration set to ${this.crossfadeDuration} seconds`);
   }
 
   public getCrossfadeDuration(): number {
