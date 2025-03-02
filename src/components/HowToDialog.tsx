@@ -1,19 +1,9 @@
-
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 export function HowToDialog() {
-  return (
-    <Dialog>
+  return <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title="How to use">
           <HelpCircle size={20} />
@@ -75,19 +65,17 @@ export function HowToDialog() {
           </section>
           
           <section className="space-y-2">
-            <h3 className="text-lg font-medium">Event DJ Tips</h3>
+            
             <div className="text-sm text-gray-300 space-y-2">
               <ul className="list-disc pl-5 space-y-1">
-                <li>Create playlists for different parts of the event (pre-match, breaks, awards, etc.).</li>
-                <li>Use the specialty playlists sparingly for maximum impact.</li>
-                <li>Prepare music that matches the energy level needed for different moments.</li>
+                
+                
+                
               </ul>
             </div>
           </section>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
-
 export default HowToDialog;
