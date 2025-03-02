@@ -35,6 +35,19 @@ const Index = () => {
     };
   }, []);
   
+  // Force currentFolder update on regular interval as a fallback mechanism
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const folder = musicLibrary.getCurrentFolder();
+      if (folder !== currentFolder) {
+        setCurrentFolder(folder);
+        console.log("Current folder updated via interval:", folder);
+      }
+    }, 1000); // Check every second
+    
+    return () => clearInterval(intervalId);
+  }, [currentFolder]);
+  
   return <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-6">
       <header className="max-w-4xl mx-auto mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-center">FIRST AutoDJ</h1>

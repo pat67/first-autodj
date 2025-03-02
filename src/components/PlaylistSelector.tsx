@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
@@ -14,11 +14,19 @@ export function PlaylistSelector({
   onRequestFolderSelect,
   currentFolder
 }: PlaylistSelectorProps) {
+  const [activeFolder, setActiveFolder] = useState<string | null>(currentFolder);
   const folders = musicLibrary.getFolders();
   const defaultFolder = musicLibrary.getDefaultFolder();
   
+  // Update the active folder when prop changes
+  useEffect(() => {
+    setActiveFolder(currentFolder);
+    console.log("PlaylistSelector - Current folder updated:", currentFolder);
+  }, [currentFolder]);
+  
   const handlePlayFolder = (folderName: string) => {
     musicLibrary.playRandomTrackFromFolder(folderName);
+    // Don't set state here - let the trackChange event in Index.tsx handle it
   };
   
   const handleSetDefault = (folderName: string) => {
@@ -62,7 +70,7 @@ export function PlaylistSelector({
             key={folder} 
             onClick={() => handlePlayFolder(folder)} 
             className={`p-4 rounded-lg cursor-pointer transition-all text-player-text bg-slate-800 text-center ${
-              folder === currentFolder ? 'outline outline-2 outline-gray-500' : ''
+              folder === activeFolder ? 'outline outline-2 outline-gray-500' : ''
             }`}
           >
             <div className="flex flex-col items-center">
