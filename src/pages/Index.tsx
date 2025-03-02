@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import MusicPlayer from '@/components/MusicPlayer';
 import PlaylistSelector from '@/components/PlaylistSelector';
 import FolderSelector from '@/components/FolderSelector';
+import HowToDialog from '@/components/HowToDialog';
 import musicLibrary from '@/utils/musicLibrary';
 
 const Index = () => {
@@ -55,13 +56,22 @@ const Index = () => {
       </header>
       
       <main className="max-w-4xl mx-auto space-y-8">
-        {showFolderSelector ? <FolderSelector onFoldersAdded={handleFoldersAdded} /> : <>
+        {showFolderSelector ? (
+          <div className="space-y-8">
+            <div className="flex justify-end">
+              <HowToDialog />
+            </div>
+            <FolderSelector onFoldersAdded={handleFoldersAdded} />
+          </div>
+        ) : (
+          <>
             <MusicPlayer onRequestFolderSelect={handleRequestFolderSelect} />
             <PlaylistSelector 
               onRequestFolderSelect={handleRequestFolderSelect} 
               currentFolder={currentFolder}
             />
-          </>}
+          </>
+        )}
       </main>
       
       <footer className="max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm">
