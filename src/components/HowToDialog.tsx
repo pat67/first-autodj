@@ -48,7 +48,7 @@ export function HowToDialog() {
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Default Playlist:</strong> The app automatically returns to the default playlist after playing tracks from other playlists.</li>
                 <li><strong>Selecting a Playlist:</strong> Click any playlist to immediately play a random track from that folder.</li>
-                <li><strong>Set as Default:</strong> Make any playlist the default by clicking the "Set as Default" button.</li>
+                <li><strong>Set as Default:</strong> Make any playlist the default by clicking menu button in the playlists area and selecting a playlist.</li>
                 
               </ul>
             </div>
