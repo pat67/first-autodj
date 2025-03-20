@@ -18,11 +18,13 @@ import audioManager from '@/utils/audioContext';
 export function SettingsDialog() {
   const [crossfadeEnabled, setCrossfadeEnabled] = useState<boolean>(true);
   const [crossfadeDuration, setCrossfadeDuration] = useState<number>(2);
+  const [normalizationEnabled, setNormalizationEnabled] = useState<boolean>(true);
   
   // Load initial values from audio manager
   useEffect(() => {
     setCrossfadeDuration(audioManager.getCrossfadeDuration());
     setCrossfadeEnabled(audioManager.getCrossfadeDuration() > 0);
+    setNormalizationEnabled(audioManager.isNormalizationEnabled());
   }, []);
   
   const handleCrossfadeToggle = (enabled: boolean) => {
@@ -42,6 +44,11 @@ export function SettingsDialog() {
     }
   };
   
+  const handleNormalizationToggle = (enabled: boolean) => {
+    setNormalizationEnabled(enabled);
+    audioManager.setNormalizationEnabled(enabled);
+  };
+  
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -58,6 +65,20 @@ export function SettingsDialog() {
         </DialogHeader>
         
         <div className="py-4 space-y-6">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="normalization-toggle" className="text-sm font-medium">
+              Volume Normalization
+              <p className="text-xs text-gray-400 font-normal mt-1">
+                Automatically balance volume levels between tracks
+              </p>
+            </Label>
+            <Switch
+              id="normalization-toggle"
+              checked={normalizationEnabled}
+              onCheckedChange={handleNormalizationToggle}
+            />
+          </div>
+          
           <div className="flex items-center justify-between">
             <Label htmlFor="crossfade-toggle" className="text-sm font-medium">
               Enable Crossfade

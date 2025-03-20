@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 export function HowToDialog() {
   return <Dialog>
       <DialogTrigger asChild>
@@ -49,7 +51,6 @@ export function HowToDialog() {
                 <li><strong>Default Playlist:</strong> The app automatically returns to the default playlist after playing tracks from other playlists.</li>
                 <li><strong>Selecting a Playlist:</strong> Click any playlist to immediately play a random track from that folder.</li>
                 <li><strong>Set as Default:</strong> Make any playlist the default by clicking menu button in the playlists area and selecting a playlist.</li>
-                
               </ul>
             </div>
           </section>
@@ -58,6 +59,7 @@ export function HowToDialog() {
             <h3 className="text-lg font-medium">Settings</h3>
             <div className="text-sm text-gray-300 space-y-2">
               <ul className="list-disc pl-5 space-y-1">
+                <li><strong>Volume Normalization:</strong> Automatically balances volume levels between tracks for consistent playback loudness.</li>
                 <li><strong>Crossfade:</strong> Enable/disable crossfade between tracks and adjust duration.</li>
                 <li><strong>Adding Music:</strong> Click "Add Folders" to add more music to your library.</li>
               </ul>
@@ -65,12 +67,8 @@ export function HowToDialog() {
           </section>
           
           <section className="space-y-2">
-            
             <div className="text-sm text-gray-300 space-y-2">
               <ul className="list-disc pl-5 space-y-1">
-                
-                
-                
               </ul>
             </div>
           </section>

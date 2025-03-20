@@ -14,6 +14,8 @@ class AudioManager {
   private volume = 1;
   private playing = false;
   private trackEndCallback: (() => void) | null = null;
+  private normalizationEnabled = true;
+  private targetLoudness = -14; // Target LUFS (Loudness Units relative to Full Scale)
   
   private constructor() {
     try {
@@ -40,10 +42,65 @@ class AudioManager {
     return await this.audioContext.decodeAudioData(arrayBuffer);
   }
 
+  // Calculate the perceived loudness of an audio buffer
+  private analyzeTrackLoudness(buffer: AudioBuffer): number {
+    if (!buffer || !buffer.getChannelData) return 0;
+    
+    // Simple RMS (root mean square) loudness measurement
+    // This is a simplified approach compared to full LUFS calculation
+    let sumOfSquares = 0;
+    let sampleCount = 0;
+    
+    // Use the first channel (usually left)
+    const channelData = buffer.getChannelData(0);
+    
+    // Sample at intervals to improve performance on larger files
+    const samplingRate = Math.max(1, Math.floor(channelData.length / 10000));
+    
+    for (let i = 0; i < channelData.length; i += samplingRate) {
+      sumOfSquares += channelData[i] * channelData[i];
+      sampleCount++;
+    }
+    
+    const rms = Math.sqrt(sumOfSquares / sampleCount);
+    
+    // Convert RMS to dB (approximation of LUFS)
+    // 20 * log10(rms) gives us dB relative to full scale
+    // For digital audio, full scale is 1.0
+    const db = 20 * Math.log10(rms);
+    
+    console.log(`Track loudness analysis: ${db.toFixed(2)} dB`);
+    return db;
+  }
+
+  // Calculate gain adjustment based on loudness analysis
+  private calculateNormalizationGain(loudness: number): number {
+    if (!this.normalizationEnabled) return 1.0;
+    
+    // Calculate difference between target and actual loudness
+    const loudnessDifference = this.targetLoudness - loudness;
+    
+    // Convert dB difference to gain multiplier
+    // 10^(dB/20) converts dB to amplitude ratio
+    let gainAdjustment = Math.pow(10, loudnessDifference / 20);
+    
+    // Limit maximum gain to prevent excessive amplification of quiet tracks
+    // which could introduce noise or distortion
+    const maxGain = 3.0;
+    gainAdjustment = Math.min(gainAdjustment, maxGain);
+    
+    console.log(`Applying normalization gain: ${gainAdjustment.toFixed(2)}x (${loudnessDifference.toFixed(2)} dB adjustment)`);
+    return gainAdjustment;
+  }
+
   public async playTrack(buffer: AudioBuffer, startAtTime = 0): Promise<void> {
     if (!this.audioContext || !this.gainNode) {
       throw new Error('Audio context not initialized');
     }
+
+    // Analyze track loudness and calculate normalization gain
+    const trackLoudness = this.analyzeTrackLoudness(buffer);
+    const normalizationGain = this.calculateNormalizationGain(trackLoudness);
 
     // If we already have a track playing, prepare to crossfade
     if (this.currentSource && this.playing && this.crossfadeDuration > 0) {
@@ -55,6 +112,9 @@ class AudioManager {
       // Create a new gain node for the next track (starts at 0)
       const nextGain = this.audioContext.createGain();
       nextGain.gain.value = 0;
+      
+      // Apply normalization gain if enabled
+      const normalizedVolume = this.volume * normalizationGain;
       
       // Connect the next source to its gain node and then to the destination
       this.nextSource.connect(nextGain);
@@ -72,7 +132,7 @@ class AudioManager {
       
       // Fade in next track - start from 0 and ramp up to the current volume
       nextGain.gain.setValueAtTime(0, now);
-      nextGain.gain.linearRampToValueAtTime(this.volume, now + this.crossfadeDuration);
+      nextGain.gain.linearRampToValueAtTime(normalizedVolume, now + this.crossfadeDuration);
       
       // Start the next track (will start silent due to gain = 0)
       this.nextSource.start(0, startAtTime);
@@ -112,8 +172,11 @@ class AudioManager {
       this.currentBuffer = buffer;
       this.currentSource.buffer = buffer;
       
-      // Reset gain node to current volume
-      this.gainNode.gain.value = this.volume;
+      // Apply normalization if enabled
+      const normalizedVolume = this.volume * normalizationGain;
+      
+      // Reset gain node to current volume with normalization
+      this.gainNode.gain.value = normalizedVolume;
       
       // Connect and start
       this.currentSource.connect(this.gainNode);
@@ -214,7 +277,14 @@ class AudioManager {
   public setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
     if (this.gainNode) {
-      this.gainNode.gain.value = this.volume;
+      // When updating volume, we need to maintain the normalization
+      if (this.currentBuffer && this.normalizationEnabled) {
+        const trackLoudness = this.analyzeTrackLoudness(this.currentBuffer);
+        const normalizationGain = this.calculateNormalizationGain(trackLoudness);
+        this.gainNode.gain.value = this.volume * normalizationGain;
+      } else {
+        this.gainNode.gain.value = this.volume;
+      }
     }
   }
 
@@ -237,6 +307,26 @@ class AudioManager {
 
   public getCrossfadeDuration(): number {
     return this.crossfadeDuration;
+  }
+  
+  public setNormalizationEnabled(enabled: boolean): void {
+    this.normalizationEnabled = enabled;
+    console.log(`Volume normalization ${enabled ? 'enabled' : 'disabled'}`);
+    
+    // Apply normalization to current track if playing
+    if (this.playing && this.currentBuffer && this.gainNode) {
+      if (enabled) {
+        const trackLoudness = this.analyzeTrackLoudness(this.currentBuffer);
+        const normalizationGain = this.calculateNormalizationGain(trackLoudness);
+        this.gainNode.gain.value = this.volume * normalizationGain;
+      } else {
+        this.gainNode.gain.value = this.volume;
+      }
+    }
+  }
+  
+  public isNormalizationEnabled(): boolean {
+    return this.normalizationEnabled;
   }
 }
 
