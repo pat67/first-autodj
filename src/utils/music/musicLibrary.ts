@@ -1,8 +1,12 @@
-
 import { toast } from '@/hooks/use-toast';
 import audioManager from '../audioContext';
 import { TrackMetadata } from './types';
-import { extractMetadata } from './metadataExtractor';
+import { 
+  extractMetadata, 
+  createBasicMetadata, 
+  isMetadataCached, 
+  clearMetadataCache 
+} from './metadataExtractor';
 
 class MusicLibrary {
   private static instance: MusicLibrary;
@@ -12,6 +16,8 @@ class MusicLibrary {
   private currentTrack: TrackMetadata | null = null;
   private currentFolder: string | null = null;
   private trackChangeCallback: ((track: TrackMetadata | null) => void) | null = null;
+  private onDeckTracks: Map<string, TrackMetadata> = new Map();
+  private filesMap: Map<string, File> = new Map();
 
   private constructor() {}
 
@@ -47,35 +53,14 @@ class MusicLibrary {
         }
         
         filesByFolder[folderName].push(file);
+        
+        this.filesMap.set(file.webkitRelativePath, file);
       }
       
       for (const [folderName, folderFiles] of Object.entries(filesByFolder)) {
-        const folderTracks: TrackMetadata[] = [];
-        
-        if (folderFiles.length > 10) {
-          toast({
-            title: "Processing music files",
-            description: `Reading metadata from ${folderFiles.length} files in ${folderName}...`
-          });
-        }
-        
-        for (const file of folderFiles) {
-          try {
-            const metadata = await extractMetadata(file, folderName);
-            folderTracks.push(metadata);
-          } catch (error) {
-            console.error(`Failed to extract metadata for ${file.name}:`, error);
-            folderTracks.push({
-              title: file.name.replace(/\.[^/.]+$/, ""),
-              artist: 'Unknown Artist',
-              album: 'Unknown Album',
-              duration: 0,
-              path: file.webkitRelativePath,
-              folder: folderName,
-              file: file
-            });
-          }
-        }
+        const folderTracks: TrackMetadata[] = folderFiles.map(file => 
+          createBasicMetadata(file, folderName)
+        );
         
         this.tracks.set(folderName, folderTracks);
         
@@ -86,11 +71,13 @@ class MusicLibrary {
         if (this.defaultFolder === null) {
           this.defaultFolder = folderName;
         }
+        
+        this.preloadNextTrackInFolder(folderName);
       }
       
       toast({
         title: "Music loaded successfully",
-        description: `Added ${Object.keys(filesByFolder).length} playlists to your library.`
+        description: `Added ${Object.keys(filesByFolder).length} playlists with ${this.filesMap.size} tracks to your library.`
       });
       
     } catch (error) {
@@ -100,6 +87,27 @@ class MusicLibrary {
         title: "Error adding music",
         description: "Failed to add music to your library."
       });
+    }
+  }
+
+  private async preloadNextTrackInFolder(folderName: string): Promise<void> {
+    const tracks = this.tracks.get(folderName);
+    if (!tracks || tracks.length === 0) return;
+    
+    const playedTracksSet = this.playedTracks.get(folderName) || new Set<string>();
+    
+    const unplayedTracks = tracks.filter(track => !playedTracksSet.has(track.path));
+    const nextTrack = unplayedTracks.length > 0 
+      ? unplayedTracks[0] 
+      : tracks[0];
+    
+    if (!isMetadataCached(nextTrack.path)) {
+      try {
+        const fullMetadata = await extractMetadata(nextTrack.file, folderName);
+        this.onDeckTracks.set(folderName, fullMetadata);
+      } catch (error) {
+        console.error('Error preloading metadata for next track:', error);
+      }
     }
   }
 
@@ -121,16 +129,33 @@ class MusicLibrary {
     }
     
     const unplayedTracks = tracks.filter(track => !playedTracksSet.has(track.path));
-    
     const availableTracks = unplayedTracks.length > 0 ? unplayedTracks : tracks;
     
     const randomIndex = Math.floor(Math.random() * availableTracks.length);
-    const selectedTrack = availableTracks[randomIndex];
+    let selectedTrack = availableTracks[randomIndex];
+    
+    if (this.onDeckTracks.has(folderName) && unplayedTracks.length > 0) {
+      const preloadedTrack = this.onDeckTracks.get(folderName)!;
+      
+      if (unplayedTracks.some(track => track.path === preloadedTrack.path)) {
+        selectedTrack = preloadedTrack;
+        this.onDeckTracks.delete(folderName);
+      }
+    }
     
     playedTracksSet.add(selectedTrack.path);
     this.playedTracks.set(folderName, playedTracksSet);
     
     try {
+      if (!isMetadataCached(selectedTrack.path)) {
+        const loadingToast = toast({
+          title: "Loading track",
+          description: `Extracting metadata for ${selectedTrack.title}...`
+        });
+        
+        selectedTrack = await extractMetadata(selectedTrack.file, folderName);
+      }
+      
       const buffer = await audioManager.loadTrack(selectedTrack.file);
       await audioManager.playTrack(buffer);
       
@@ -146,6 +171,8 @@ class MusicLibrary {
       }
       
       console.log(`Now playing from folder: ${folderName}`, selectedTrack);
+      
+      this.preloadNextTrackInFolder(folderName);
       
     } catch (error) {
       console.error('Error playing track:', error);
@@ -201,6 +228,17 @@ class MusicLibrary {
   
   public hasMusic(): boolean {
     return this.tracks.size > 0;
+  }
+
+  public clearLibrary(): void {
+    this.tracks.clear();
+    this.playedTracks.clear();
+    this.defaultFolder = null;
+    this.currentTrack = null;
+    this.currentFolder = null;
+    this.onDeckTracks.clear();
+    this.filesMap.clear();
+    clearMetadataCache();
   }
 }
 

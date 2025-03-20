@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Music } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import musicLibrary from '@/utils/musicLibrary';
 
 interface PlaylistSelectorProps {
@@ -15,18 +16,25 @@ export function PlaylistSelector({
   currentFolder
 }: PlaylistSelectorProps) {
   const [activeFolder, setActiveFolder] = useState<string | null>(currentFolder);
+  const [isLoading, setIsLoading] = useState(false);
   const folders = musicLibrary.getFolders();
   const defaultFolder = musicLibrary.getDefaultFolder();
   
   // Update the active folder when prop changes
   useEffect(() => {
     setActiveFolder(currentFolder);
-    console.log("PlaylistSelector - Current folder updated:", currentFolder);
   }, [currentFolder]);
   
-  const handlePlayFolder = (folderName: string) => {
-    musicLibrary.playRandomTrackFromFolder(folderName);
-    // Don't set state here - let the trackChange event in Index.tsx handle it
+  const handlePlayFolder = async (folderName: string) => {
+    setIsLoading(true);
+    try {
+      await musicLibrary.playRandomTrackFromFolder(folderName);
+      // Don't set state here - let the trackChange event in Index.tsx handle it
+    } catch (error) {
+      console.error('Error playing folder:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleSetDefault = (folderName: string) => {
@@ -71,10 +79,20 @@ export function PlaylistSelector({
             onClick={() => handlePlayFolder(folder)} 
             className={`p-4 rounded-lg cursor-pointer transition-all text-player-text bg-slate-800 text-center ${
               folder === activeFolder ? 'outline outline-2 outline-gray-500' : ''
-            }`}
+            } ${isLoading ? 'opacity-70' : ''}`}
           >
             <div className="flex flex-col items-center">
-              <span className="font-medium truncate">{folder}</span>
+              {isLoading && folder === activeFolder ? (
+                <>
+                  <Skeleton className="h-5 w-28 mb-1 bg-gray-600" />
+                  <Skeleton className="h-4 w-20 bg-gray-700" />
+                </>
+              ) : (
+                <>
+                  <Music size={18} className="mb-1 text-player-text/70" />
+                  <span className="font-medium truncate">{folder}</span>
+                </>
+              )}
             </div>
           </div>
         ))}

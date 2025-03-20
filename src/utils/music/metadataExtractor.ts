@@ -1,8 +1,16 @@
-
 import * as mm from 'music-metadata';
 import { TrackMetadata } from './types';
 
+// Cache to store already processed metadata
+const metadataCache = new Map<string, TrackMetadata>();
+
 export async function extractMetadata(file: File, folderName: string): Promise<TrackMetadata> {
+  // Check if metadata is already in cache
+  const cacheKey = file.webkitRelativePath;
+  if (metadataCache.has(cacheKey)) {
+    return metadataCache.get(cacheKey)!;
+  }
+
   try {
     const arrayBuffer = await file.arrayBuffer();
     const metadata = await mm.parseBuffer(
@@ -18,7 +26,7 @@ export async function extractMetadata(file: File, folderName: string): Promise<T
     
     console.log('Successfully extracted metadata:', { title, artist, album, duration });
     
-    return {
+    const trackMetadata = {
       title,
       artist,
       album,
@@ -27,10 +35,44 @@ export async function extractMetadata(file: File, folderName: string): Promise<T
       folder: folderName,
       file: file
     };
+
+    // Store in cache for future use
+    metadataCache.set(cacheKey, trackMetadata);
+    
+    return trackMetadata;
   } catch (error) {
     console.error('Error parsing metadata:', error);
-    return fallbackMetadataExtraction(file, folderName);
+    const fallbackMetadata = await fallbackMetadataExtraction(file, folderName);
+    
+    // Store fallback in cache too
+    metadataCache.set(cacheKey, fallbackMetadata);
+    
+    return fallbackMetadata;
   }
+}
+
+// A lightweight function to create basic metadata without parsing the file
+// Used for display in the library before actual playback
+export function createBasicMetadata(file: File, folderName: string): TrackMetadata {
+  return {
+    title: formatTitleFromFilename(file.name),
+    artist: tryExtractArtistFromFilename(file.name),
+    album: folderName,
+    duration: 0, // Will be updated when actually playing
+    path: file.webkitRelativePath,
+    folder: folderName,
+    file: file
+  };
+}
+
+// Clear the cache when it makes sense (e.g., when user clears library)
+export function clearMetadataCache(): void {
+  metadataCache.clear();
+}
+
+// Check if metadata is already cached
+export function isMetadataCached(filePath: string): boolean {
+  return metadataCache.has(filePath);
 }
 
 export function formatTitleFromFilename(filename: string): string {
