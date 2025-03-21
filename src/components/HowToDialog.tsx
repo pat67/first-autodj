@@ -61,7 +61,6 @@ export function HowToDialog() {
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Volume Normalization:</strong> Automatically balances volume levels between tracks for consistent playback loudness.</li>
                 <li><strong>Crossfade:</strong> Enable/disable crossfade between tracks and adjust duration.</li>
-                <li><strong>Adding Music:</strong> Click "Add Folders" to add more music to your library.</li>
               </ul>
             </div>
           </section>
