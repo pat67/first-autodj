@@ -16,6 +16,7 @@ class AudioManager {
   private trackEndCallback: (() => void) | null = null;
   private normalizationEnabled = true;
   private targetLoudness = -14; // Target LUFS (Loudness Units relative to Full Scale)
+  private loudnessCache: WeakMap<AudioBuffer, number> = new WeakMap();
   
   private constructor() {
     try {
@@ -35,6 +36,15 @@ class AudioManager {
     return AudioManager.instance;
   }
 
+  private async ensureContextRunning(): Promise<void> {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+      } catch (e) {
+        console.warn('AudioContext resume failed', e);
+      }
+    }
+  }
   public async loadTrack(audioFile: File): Promise<AudioBuffer> {
     if (!this.audioContext) throw new Error('Audio context not initialized');
     
@@ -45,6 +55,10 @@ class AudioManager {
   // Calculate the perceived loudness of an audio buffer
   private analyzeTrackLoudness(buffer: AudioBuffer): number {
     if (!buffer || !buffer.getChannelData) return 0;
+
+    // Use cache to avoid re-analyzing the same buffer repeatedly
+    const cached = this.loudnessCache.get(buffer);
+    if (cached !== undefined) return cached;
     
     // Simple RMS (root mean square) loudness measurement
     // This is a simplified approach compared to full LUFS calculation
@@ -62,14 +76,15 @@ class AudioManager {
       sampleCount++;
     }
     
-    const rms = Math.sqrt(sumOfSquares / sampleCount);
+    const rms = Math.sqrt(sumOfSquares / Math.max(1, sampleCount));
     
     // Convert RMS to dB (approximation of LUFS)
     // 20 * log10(rms) gives us dB relative to full scale
     // For digital audio, full scale is 1.0
-    const db = 20 * Math.log10(rms);
+    const db = 20 * Math.log10(Math.max(rms, 1e-8)); // avoid -Infinity
     
     console.log(`Track loudness analysis: ${db.toFixed(2)} dB`);
+    this.loudnessCache.set(buffer, db);
     return db;
   }
 
@@ -98,6 +113,8 @@ class AudioManager {
       throw new Error('Audio context not initialized');
     }
 
+    await this.ensureContextRunning();
+
     // Analyze track loudness and calculate normalization gain
     const trackLoudness = this.analyzeTrackLoudness(buffer);
     const normalizationGain = this.calculateNormalizationGain(trackLoudness);
@@ -108,6 +125,12 @@ class AudioManager {
       this.nextBuffer = buffer;
       this.nextSource = this.audioContext.createBufferSource();
       this.nextSource.buffer = buffer;
+      const nextRef = this.nextSource;
+      this.nextSource.onended = () => {
+        if (this.currentSource === nextRef && this.playing && this.trackEndCallback) {
+          this.trackEndCallback();
+        }
+      };
       
       // Create a new gain node for the next track (starts at 0)
       const nextGain = this.audioContext.createGain();
@@ -180,6 +203,12 @@ class AudioManager {
       
       // Connect and start
       this.currentSource.connect(this.gainNode);
+      const currRef = this.currentSource;
+      this.currentSource.onended = () => {
+        if (this.currentSource === currRef && this.playing && this.trackEndCallback) {
+          this.trackEndCallback();
+        }
+      };
       this.currentSource.start(0, startAtTime);
       
       // Set timing information

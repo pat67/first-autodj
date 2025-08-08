@@ -181,6 +181,15 @@ class MusicLibrary {
         title: "Playback Error",
         description: `Failed to play: ${selectedTrack.title}`
       });
+      // Attempt to skip to the next available track to keep playback running
+      try {
+        this.preloadNextTrackInFolder(folderName);
+        setTimeout(() => {
+          this.playRandomTrackFromFolder(folderName);
+        }, 0);
+      } catch (e) {
+        console.error('Auto-skip after error failed:', e);
+      }
     }
   }
 
