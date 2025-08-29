@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import audioManager from '@/utils/audioContext';
+import { AutomationSettings } from './AutomationSettings';
 
 export function SettingsDialog() {
   const [crossfadeEnabled, setCrossfadeEnabled] = useState<boolean>(true);
@@ -52,62 +54,73 @@ export function SettingsDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" title="Settings">
+        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="Settings">
           <Settings size={20} />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white border-gray-700">
+      <DialogContent className="sm:max-w-[800px] bg-card text-card-foreground border-border">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Configure your audio playback preferences.
+          <DialogDescription className="text-muted-foreground">
+            Configure your audio playback and automation preferences.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4 space-y-6">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="normalization-toggle" className="text-sm font-medium">
-              Volume Normalization
-              <p className="text-xs text-gray-400 font-normal mt-1">
-                Automatically balance volume levels between tracks
-              </p>
-            </Label>
-            <Switch
-              id="normalization-toggle"
-              checked={normalizationEnabled}
-              onCheckedChange={handleNormalizationToggle}
-            />
-          </div>
+        <Tabs defaultValue="audio" className="py-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="audio">Audio</TabsTrigger>
+            <TabsTrigger value="automation">Automation</TabsTrigger>
+          </TabsList>
           
-          <div className="flex items-center justify-between">
-            <Label htmlFor="crossfade-toggle" className="text-sm font-medium">
-              Enable Crossfade
-            </Label>
-            <Switch
-              id="crossfade-toggle"
-              checked={crossfadeEnabled}
-              onCheckedChange={handleCrossfadeToggle}
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <Label htmlFor="crossfade-duration" className="text-sm font-medium">
-                Crossfade Duration: {crossfadeDuration} seconds
+          <TabsContent value="audio" className="space-y-6 mt-6">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="normalization-toggle" className="text-sm font-medium">
+                Volume Normalization
+                <p className="text-xs text-muted-foreground font-normal mt-1">
+                  Automatically balance volume levels between tracks
+                </p>
               </Label>
+              <Switch
+                id="normalization-toggle"
+                checked={normalizationEnabled}
+                onCheckedChange={handleNormalizationToggle}
+              />
             </div>
-            <Slider
-              id="crossfade-duration"
-              disabled={!crossfadeEnabled}
-              min={1}
-              max={10}
-              step={0.5}
-              value={[crossfadeDuration]}
-              onValueChange={(value) => handleDurationChange(value)}
-              className={!crossfadeEnabled ? "opacity-50" : ""}
-            />
-          </div>
-        </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="crossfade-toggle" className="text-sm font-medium">
+                Enable Crossfade
+              </Label>
+              <Switch
+                id="crossfade-toggle"
+                checked={crossfadeEnabled}
+                onCheckedChange={handleCrossfadeToggle}
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <Label htmlFor="crossfade-duration" className="text-sm font-medium">
+                  Crossfade Duration: {crossfadeDuration} seconds
+                </Label>
+              </div>
+              <Slider
+                id="crossfade-duration"
+                disabled={!crossfadeEnabled}
+                min={1}
+                max={10}
+                step={0.5}
+                value={[crossfadeDuration]}
+                onValueChange={(value) => handleDurationChange(value)}
+                className={!crossfadeEnabled ? "opacity-50" : ""}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="automation" className="mt-6">
+            <AutomationSettings />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
