@@ -54,7 +54,7 @@ export function AutomationSettings() {
       </CardHeader>
       
       <CardContent className="p-0">
-        <ScrollArea className="max-h-[60vh] p-6">
+        <ScrollArea className="h-[50vh] p-6">
           <div className="space-y-6">
             {/* Master Enable/Disable */}
             <div className="flex items-center justify-between">

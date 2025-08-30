@@ -58,7 +58,7 @@ export function SettingsDialog() {
           <Settings size={20} />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] bg-card text-card-foreground border-border">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-card text-card-foreground border-border overflow-hidden">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription className="text-muted-foreground">
