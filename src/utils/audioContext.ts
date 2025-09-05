@@ -302,9 +302,13 @@ class AudioManager {
     if (!this.currentBuffer || !this.audioContext) return;
     
     const wasPlaying = this.playing;
+    const bufferToRestore = this.currentBuffer; // Preserve buffer before stop()
     
     // Stop current playback
     this.stop();
+    
+    // Restore the buffer that was cleared by stop()
+    this.currentBuffer = bufferToRestore;
     
     // Start a new source at the seek position
     if (wasPlaying && this.currentBuffer) {
