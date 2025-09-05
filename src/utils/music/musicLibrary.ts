@@ -124,6 +124,14 @@ class MusicLibrary {
   }
 
   public async playRandomTrackFromFolder(folderName: string): Promise<void> {
+    console.log(`[MusicLibrary] Starting playback from folder: ${folderName}`);
+    
+    // Stop any existing playback to prevent overlapping tracks
+    try {
+      audioManager.stop();
+    } catch (error) {
+      console.warn('[MusicLibrary] Error stopping previous track:', error);
+    }
     const tracks = this.tracks.get(folderName);
     if (!tracks || tracks.length === 0) {
       toast({

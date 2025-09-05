@@ -121,6 +121,18 @@ class AudioManager {
 
     // If we already have a track playing, prepare to crossfade
     if (this.currentSource && this.playing && this.crossfadeDuration > 0) {
+      // Stop any existing next source to prevent conflicts
+      if (this.nextSource) {
+        try {
+          this.nextSource.stop();
+          this.nextSource.disconnect();
+        } catch (e) {
+          // Ignore errors from already stopped sources
+        }
+        this.nextSource = null;
+        this.nextBuffer = null;
+      }
+      
       // Create a new buffer source for the next track
       this.nextBuffer = buffer;
       this.nextSource = this.audioContext.createBufferSource();
@@ -148,52 +160,48 @@ class AudioManager {
       
       // Store the existing gain node for cleanup
       const oldGain = this.gainNode;
+      const oldSource = this.currentSource;
       
-      // Fade out current track - fix: ensure we actually fade out the current track
-      oldGain.gain.setValueAtTime(this.volume, now);
+      // Fade out current track
+      oldGain.gain.setValueAtTime(oldGain.gain.value, now);
       oldGain.gain.linearRampToValueAtTime(0, now + this.crossfadeDuration);
       
-      // Fade in next track - start from 0 and ramp up to the current volume
+      // Fade in next track
       nextGain.gain.setValueAtTime(0, now);
       nextGain.gain.linearRampToValueAtTime(normalizedVolume, now + this.crossfadeDuration);
       
-      // Start the next track (will start silent due to gain = 0)
+      // Start the next track
       this.nextSource.start(0, startAtTime);
       
-      // After crossfade duration, clean up old track
+      // Immediately update references to prevent race conditions
+      this.currentSource = this.nextSource;
+      this.gainNode = nextGain;
+      this.currentBuffer = this.nextBuffer;
+      this.nextSource = null;
+      this.nextBuffer = null;
+      
+      // Reset timing information
+      this.currentStartTime = this.audioContext.currentTime - startAtTime;
+      this.currentDuration = buffer.duration;
+      
+      // Clean up old track after crossfade
       setTimeout(() => {
-        // Stop and disconnect old source immediately
-        if (this.currentSource) {
-          try {
-            this.currentSource.stop();
-          } catch (e) {
-            // Source may already be stopped, ignore error
-          }
-          this.currentSource.disconnect();
-          this.currentSource = null;
+        try {
+          oldSource.stop();
+          oldSource.disconnect();
+        } catch (e) {
+          // Source may already be stopped, ignore error
         }
         
-        // Disconnect old gain node
         try {
           oldGain.disconnect();
         } catch (e) {
           // May already be disconnected, ignore error
         }
-        
-        // The next source becomes the current source
-        this.currentSource = this.nextSource;
-        this.gainNode = nextGain;
-        this.currentBuffer = this.nextBuffer;
-        this.nextSource = null;
-        this.nextBuffer = null;
-        
-        // Reset timing information
-        this.currentStartTime = this.audioContext!.currentTime - startAtTime;
-        this.currentDuration = buffer.duration;
-        
-        // Set up track end detection
-        this.setTrackEndTimer();
       }, this.crossfadeDuration * 1000);
+      
+      // Set up track end detection
+      this.setTrackEndTimer();
     } else {
       // First track, starting after being stopped, or crossfade disabled
       if (this.currentSource) {
@@ -241,8 +249,10 @@ class AudioManager {
     
     // Set a new timer for track end
     if (timeRemaining > 0) {
+      console.log(`[AudioManager] Setting track end timer for ${timeRemaining.toFixed(2)} seconds`);
       this.trackEndTimeout = setTimeout(() => {
-        if (this.trackEndCallback) {
+        console.log('[AudioManager] Track ended naturally');
+        if (this.trackEndCallback && this.playing) {
           this.trackEndCallback();
         }
       }, timeRemaining * 1000);
