@@ -121,6 +121,8 @@ class AudioManager {
 
     // If we already have a track playing, prepare to crossfade
     if (this.currentSource && this.playing && this.crossfadeDuration > 0) {
+      console.log('[AudioManager] Starting crossfade transition');
+      
       // Stop any existing next source to prevent conflicts
       if (this.nextSource) {
         try {
@@ -158,9 +160,9 @@ class AudioManager {
       // Get current time from audio context
       const now = this.audioContext.currentTime;
       
-      // Store the existing gain node for cleanup
-      const oldGain = this.gainNode;
+      // Store the existing source and gain for cleanup
       const oldSource = this.currentSource;
+      const oldGain = this.gainNode;
       
       // Fade out current track
       oldGain.gain.setValueAtTime(oldGain.gain.value, now);
@@ -173,19 +175,9 @@ class AudioManager {
       // Start the next track
       this.nextSource.start(0, startAtTime);
       
-      // Immediately update references to prevent race conditions
-      this.currentSource = this.nextSource;
-      this.gainNode = nextGain;
-      this.currentBuffer = this.nextBuffer;
-      this.nextSource = null;
-      this.nextBuffer = null;
-      
-      // Reset timing information
-      this.currentStartTime = this.audioContext.currentTime - startAtTime;
-      this.currentDuration = buffer.duration;
-      
-      // Clean up old track after crossfade
+      // Clean up old track after crossfade completes
       setTimeout(() => {
+        console.log('[AudioManager] Crossfade cleanup - stopping old source');
         try {
           oldSource.stop();
           oldSource.disconnect();
@@ -200,7 +192,18 @@ class AudioManager {
         }
       }, this.crossfadeDuration * 1000);
       
-      // Set up track end detection
+      // Update references after starting the new track
+      this.currentSource = this.nextSource;
+      this.gainNode = nextGain;
+      this.currentBuffer = this.nextBuffer;
+      this.nextSource = null;
+      this.nextBuffer = null;
+      
+      // Reset timing information
+      this.currentStartTime = this.audioContext.currentTime - startAtTime;
+      this.currentDuration = buffer.duration;
+      
+      // Set up track end detection for the new track
       this.setTrackEndTimer();
     } else {
       // First track, starting after being stopped, or crossfade disabled
