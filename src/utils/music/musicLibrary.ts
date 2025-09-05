@@ -28,6 +28,16 @@ class MusicLibrary {
     return MusicLibrary.instance;
   }
 
+  // Fisher-Yates shuffle algorithm for randomizing track order
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
   public async addFolder(files: FileList): Promise<void> {
     try {
       const filesByFolder: Record<string, File[]> = {};
@@ -62,7 +72,9 @@ class MusicLibrary {
           createBasicMetadata(file, folderName)
         );
         
-        this.tracks.set(folderName, folderTracks);
+        // Shuffle tracks to ensure different playback order each time app loads
+        const shuffledTracks = this.shuffleArray(folderTracks);
+        this.tracks.set(folderName, shuffledTracks);
         
         if (!this.playedTracks.has(folderName)) {
           this.playedTracks.set(folderName, new Set<string>());
