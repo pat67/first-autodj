@@ -157,8 +157,8 @@ class MusicLibrary {
       }
       
       const buffer = await audioManager.loadTrack(selectedTrack.file);
-      await audioManager.playTrack(buffer);
       
+      // Update metadata and state BEFORE starting playback
       if (selectedTrack.duration === 0) {
         selectedTrack.duration = buffer.duration;
       }
@@ -166,6 +166,10 @@ class MusicLibrary {
       this.currentTrack = selectedTrack;
       this.currentFolder = folderName;
       
+      // Start audio playback
+      await audioManager.playTrack(buffer);
+      
+      // Notify listeners after playback has started
       if (this.trackChangeCallback) {
         this.trackChangeCallback(selectedTrack);
       }

@@ -162,13 +162,23 @@ class AudioManager {
       
       // After crossfade duration, clean up old track
       setTimeout(() => {
-        // Disconnect and clean up old source
+        // Stop and disconnect old source immediately
         if (this.currentSource) {
+          try {
+            this.currentSource.stop();
+          } catch (e) {
+            // Source may already be stopped, ignore error
+          }
           this.currentSource.disconnect();
-          this.currentSource.stop();
           this.currentSource = null;
         }
-        oldGain.disconnect();
+        
+        // Disconnect old gain node
+        try {
+          oldGain.disconnect();
+        } catch (e) {
+          // May already be disconnected, ignore error
+        }
         
         // The next source becomes the current source
         this.currentSource = this.nextSource;
@@ -264,15 +274,27 @@ class AudioManager {
 
   public stop(): void {
     if (this.currentSource) {
-      this.currentSource.stop();
+      try {
+        this.currentSource.stop();
+        this.currentSource.disconnect();
+      } catch (e) {
+        // Source may already be stopped, ignore error
+      }
       this.currentSource = null;
     }
     if (this.nextSource) {
-      this.nextSource.stop();
+      try {
+        this.nextSource.stop();
+        this.nextSource.disconnect();
+      } catch (e) {
+        // Source may already be stopped, ignore error
+      }
       this.nextSource = null;
     }
     this.playing = false;
     this.currentPlaybackTime = 0;
+    this.currentBuffer = null;
+    this.nextBuffer = null;
     clearTimeout(this.trackEndTimeout);
   }
 
