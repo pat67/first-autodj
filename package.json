@@ -101,6 +101,7 @@
     "files": [
       "dist/**/*",
       "electron/**/*.js",
+      "electron/**/*.cjs",
       "package.json"
     ],
     "win": {

@@ -54,10 +54,10 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				player: {
-					DEFAULT: '#0c0c0c',
-					light: '#1a1a1a',
-					accent: '#2a2a2a',
-					text: '#ffffff'
+					DEFAULT: 'hsl(var(--player-bg) / <alpha-value>)',
+					light: 'hsl(var(--player-light) / <alpha-value>)',
+					accent: 'hsl(var(--player-accent) / <alpha-value>)',
+					text: 'hsl(var(--player-text) / <alpha-value>)',
 				}
 			},
 			borderRadius: {

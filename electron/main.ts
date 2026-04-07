@@ -62,7 +62,7 @@ function startAutomationServer(port: number): Promise<{ success: boolean; error?
       res.end(JSON.stringify({ success: true, trigger }));
     });
 
-    server.listen(port, '127.0.0.1', () => {
+    server.listen(port, '0.0.0.0', () => {
       automationServer = server;
       resolve({ success: true });
     });
@@ -101,15 +101,16 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 680,
-    minWidth: 700,
-    minHeight: 550,
+    minWidth: 480,
+    minHeight: 500,
     title: 'FIRST AutoDJ',
     icon: path.join(__dirname, '../public/favicon.ico'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: true,
+      sandbox: false, // Required for preload script to use require() (Electron 20+ defaults sandbox to true)
     },
     backgroundColor: '#0f172a',
     show: false,

@@ -16,8 +16,15 @@ import {
 } from "@/components/ui/dialog";
 import audioManager from '@/utils/audioContext';
 import { AutomationSettings } from './AutomationSettings';
+import { AutomationConfig } from '@/hooks/useAutomationServer';
 
-export function SettingsDialog() {
+interface SettingsDialogProps {
+  automationConfig: AutomationConfig;
+  automationSaveConfig: (config: AutomationConfig) => void;
+  automationIsRunning: boolean;
+}
+
+export function SettingsDialog({ automationConfig, automationSaveConfig, automationIsRunning }: SettingsDialogProps) {
   const [crossfadeEnabled, setCrossfadeEnabled] = useState<boolean>(true);
   const [crossfadeDuration, setCrossfadeDuration] = useState<number>(2);
   const [normalizationEnabled, setNormalizationEnabled] = useState<boolean>(true);
@@ -142,7 +149,11 @@ export function SettingsDialog() {
           </TabsContent>
           
           <TabsContent value="automation" className="mt-6">
-            <AutomationSettings />
+            <AutomationSettings
+              config={automationConfig}
+              saveConfig={automationSaveConfig}
+              isRunning={automationIsRunning}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

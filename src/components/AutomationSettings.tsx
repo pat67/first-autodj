@@ -8,10 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import musicLibrary from '@/utils/musicLibrary';
-import { AutomationConfig, useAutomationServer } from '@/hooks/useAutomationServer';
+import { AutomationConfig } from '@/hooks/useAutomationServer';
 
-export function AutomationSettings() {
-  const { config, saveConfig, isRunning } = useAutomationServer();
+interface AutomationSettingsProps {
+  config: AutomationConfig;
+  saveConfig: (config: AutomationConfig) => void;
+  isRunning: boolean;
+}
+
+export function AutomationSettings({ config, saveConfig, isRunning }: AutomationSettingsProps) {
   const folders = musicLibrary.getFolders();
 
   const updateConfig = (updates: Partial<AutomationConfig>) => {

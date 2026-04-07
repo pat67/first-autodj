@@ -1,26 +1,72 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause, SkipForward, Volume, VolumeX, ListMusic } from "lucide-react";
 import audioManager from '@/utils/audioContext';
 import musicLibrary, { TrackMetadata } from '@/utils/musicLibrary';
-import SettingsDialog from './SettingsDialog';
-import HowToDialog from './HowToDialog';
+
+// ── ScrollingText ────────────────────────────────────────────────────────────
+// Scrolls text when it overflows its container. The span is always inline-block
+// with no explicit width so offsetWidth reflects the true rendered text width
+// regardless of overflow, and no inline-style overrides are ever needed.
+function ScrollingText({ text, className }: { text: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const textEl = textRef.current;
+    if (!container || !textEl) return;
+
+    // offsetWidth on an unconstrained inline-block = natural rendered text width.
+    // transform (translateX from animation) does not affect offsetWidth, so this
+    // measurement is accurate whether or not the animation is already running.
+    const textWidth = textEl.offsetWidth;
+    const containerWidth = container.offsetWidth;
+    const overflow = textWidth > containerWidth + 1;
+
+    if (overflow) {
+      const dist = textWidth - containerWidth;
+      // ~40 px/s scrolling speed, min 5 s, plus 30 % for the pause keyframes
+      const scrollSecs = Math.max(5, dist / 40) * 1.3;
+      container.style.setProperty('--marquee-dist', `-${dist}px`);
+      container.style.setProperty('--marquee-duration', `${scrollSecs.toFixed(1)}s`);
+    }
+    setShouldScroll(overflow);
+  }, [text]);
+
+  return (
+    <div ref={containerRef} className={`overflow-hidden w-full ${className ?? ''}`}>
+      {/* whitespace-nowrap keeps text on one line; inline-block lets offsetWidth
+          expand to the natural text width for accurate overflow detection. */}
+      <span ref={textRef} className={`inline-block whitespace-nowrap${shouldScroll ? ' animate-marquee' : ''}`}>
+        {text}
+      </span>
+    </div>
+  );
+}
 
 interface MusicPlayerProps {
   onRequestFolderSelect: () => void;
 }
 
 export function MusicPlayer({
-  onRequestFolderSelect
+  onRequestFolderSelect,
 }: MusicPlayerProps) {
-  const [currentTrack, setCurrentTrack] = useState<TrackMetadata | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
+  // Initialise from the singleton services so the UI reflects reality when
+  // the component remounts (e.g. after closing the "Add Music" screen).
+  const [currentTrack, setCurrentTrack] = useState<TrackMetadata | null>(
+    () => musicLibrary.getCurrentTrack()
+  );
+  const [isPlaying, setIsPlaying] = useState(() => audioManager.isPlaying());
+  const [volume, setVolume] = useState(() => audioManager.getVolume());
   const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => audioManager.getCurrentTime());
+  const [duration, setDuration] = useState(
+    () => musicLibrary.getCurrentTrack()?.duration ?? audioManager.getDuration()
+  );
   const [isDraggingSeeker, setIsDraggingSeeker] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(1);
   const timeUpdateIntervalRef = useRef<number | null>(null);
@@ -32,7 +78,7 @@ export function MusicPlayer({
   currentTrackRef.current = currentTrack;
 
   useEffect(() => {
-    musicLibrary.onTrackChange(track => {
+    const unsubTrack = musicLibrary.onTrackChange(track => {
       setCurrentTrack(track);
       if (track) {
         setDuration(track.duration);
@@ -47,6 +93,7 @@ export function MusicPlayer({
     startTimeUpdateInterval();
 
     return () => {
+      unsubTrack();
       if (timeUpdateIntervalRef.current !== null) {
         window.clearInterval(timeUpdateIntervalRef.current);
       }
@@ -173,18 +220,14 @@ export function MusicPlayer({
 
   return <div className="w-full bg-player rounded-xl shadow-lg overflow-hidden transition-all duration-300 animate-fade-in">
       <div className="p-6 bg-player-light">
-        <div className="relative">
-          <div className="absolute right-0 top-0 flex space-x-1">
-            <SettingsDialog />
-            <HowToDialog />
-          </div>
-
-          <div className="mb-4 text-player-text text-center">
+        <div className="mb-4 text-player-text text-center">
             {currentTrack ? <>
                 <div className="text-xs uppercase tracking-wider text-player-text/70 mb-1">Now Playing</div>
-                <h2 className="text-2xl font-bold truncate">{currentTrack.title}</h2>
+                <h2 className="text-2xl font-bold">
+                  <ScrollingText text={currentTrack.title} />
+                </h2>
                 <div className="text-player-text/80 mt-1">
-                  <span className="truncate">{currentTrack.artist}</span>
+                  <ScrollingText text={currentTrack.artist} />
                 </div>
                 {playlistDisplayName && (
                   <div className="flex items-center justify-center gap-1 mt-1.5 text-xs text-player-text/50">
@@ -198,7 +241,6 @@ export function MusicPlayer({
                   Select a playlist or add music to begin
                 </p>
               </div>}
-          </div>
         </div>
 
         <div className="my-4">
@@ -209,26 +251,23 @@ export function MusicPlayer({
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" className="text-player-text hover:bg-player-accent rounded-full" onClick={handleMuteToggle}>
-              {isMuted ? <VolumeX size={20} /> : <Volume size={20} />}
-            </Button>
-            <Slider value={[isMuted ? 0 : volume]} min={0} max={1} step={0.01} onValueChange={handleVolumeChange} className="w-24 [&_.absolute]:bg-gray-500" />
-            <span className="text-xs text-player-text/60 w-8 text-right tabular-nums">{volumePct}%</span>
-          </div>
+        {/* ── Volume row ───────────────────────────────────────── */}
+        <div className="flex items-center justify-center gap-3 mt-5">
+          <Button variant="ghost" size="icon" className="shrink-0 text-player-text hover:bg-player-accent rounded-full" onClick={handleMuteToggle}>
+            {isMuted ? <VolumeX size={20} /> : <Volume size={20} />}
+          </Button>
+          <Slider value={[isMuted ? 0 : volume]} min={0} max={1} step={0.01} onValueChange={handleVolumeChange} className="w-36 [&_.absolute]:bg-gray-500" />
+          <span className="text-xs text-player-text/60 w-8 text-right tabular-nums shrink-0">{volumePct}%</span>
+        </div>
 
-          <div className="flex items-center space-x-4 justify-center flex-1">
-            <Button size="icon" variant="ghost" onClick={handlePlayPause} className="h-12 w-12 rounded-full text-player-text bg-slate-900 hover:bg-slate-800">
-              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-            </Button>
-            <Button size="icon" variant="ghost" onClick={handleNextTrack} className="h-10 w-10 rounded-full text-player-text bg-slate-900 hover:bg-slate-800">
-              <SkipForward size={18} />
-            </Button>
-          </div>
-
-          {/* Spacer to balance the volume controls */}
-          <div className="w-[124px]"></div>
+        {/* ── Playback row ─────────────────────────────────────── */}
+        <div className="flex items-center justify-center gap-5 mt-4">
+          <Button size="icon" variant="ghost" onClick={handlePlayPause} className="h-12 w-12 rounded-full text-player-text bg-gray-200 dark:bg-slate-900 hover:bg-gray-300 dark:hover:bg-slate-800">
+            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+          </Button>
+          <Button size="icon" variant="ghost" onClick={handleNextTrack} className="h-10 w-10 rounded-full text-player-text bg-gray-200 dark:bg-slate-900 hover:bg-gray-300 dark:hover:bg-slate-800">
+            <SkipForward size={18} />
+          </Button>
         </div>
       </div>
     </div>;
